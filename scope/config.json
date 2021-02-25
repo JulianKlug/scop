@@ -4,13 +4,15 @@
 
     "arch": {
         "type": "EfficientNet3DModel",
-        "args": {}
+        "args": {
+		"num_classes": 7
+	}
     },
     "data_loader": {
         "type": "GsdOutcomeDataLoader",
         "args":{
-            "imaging_dataset_path": "/Users/jk1/temp/joining_test/small_rescaled_data_set.npz",
-            "outcome_file_path":  "/Users/jk1/temp/joining_test/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
+            "imaging_dataset_path": "/home/klug/working_data/perfusion_maps/no_GT/noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
+            "outcome_file_path":  "/home/klug/working_data/clinical/clinical_outcome/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
             "channels": [0,1,2,3],
             "outcome": "combined_mRS_90_days",
             "preload_data": true,
@@ -42,12 +44,12 @@
     "trainer": {
         "epochs": 200,
 
-        "save_dir": "saved/",
+        "save_dir": "/home/klug/output/scope",
         "save_period": 5,
         "verbosity": 2,
         
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "early_stop": 200,
 
         "tensorboard": true
     }
