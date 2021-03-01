@@ -1,2 +1,2 @@
 # scope
-Stroke Clinical Outcome Prediction (end-to-end)
+Stroke Clinical Outcome Prediction Experiment

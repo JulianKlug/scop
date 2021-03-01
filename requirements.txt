@@ -4,3 +4,7 @@ numpy
 tqdm
 tensorboard>=1.14
 sklearn
+pandas
+torchsummary
+xlrd
+openpyxl
