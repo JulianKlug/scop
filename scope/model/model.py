@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch_3d import EfficientNet3D
 from torchsummary import summary
+from torchvision import models
 
 from base import BaseModel
 
@@ -30,6 +31,25 @@ class EfficientNet3DModel(BaseModel):
         super().__init__()
 
         self.model = EfficientNet3D.from_name("efficientnet-b0", override_params={'num_classes': num_classes}, in_channels=in_channels)
+
+    def forward(self, x):
+        return self.model(x)
+
+    def summarize(self, input_size):
+        summary(self.model, input_size=input_size)
+
+
+class Resnet3D_18L(BaseModel):
+    def __init__(self, num_classes=6, in_channels=4):
+        super().__init__()
+
+        self.model = models.video.r3d_18(pretrained=True, progress=True)
+
+        self.model.stem[0] = nn.Conv3d(in_channels, 64, kernel_size=(3, 7, 7), stride=(1, 2, 2),
+                      padding=(1, 3, 3), bias=False)
+
+        num_ftrs = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_ftrs, num_classes)
 
     def forward(self, x):
         return self.model(x)

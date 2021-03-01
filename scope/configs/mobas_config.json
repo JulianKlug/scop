@@ -1,0 +1,57 @@
+{
+    "name": "Resnet3D_18L_test",
+    "n_gpu": 1,
+
+    "arch": {
+        "type": "Resnet3D_18L",
+        "args": {
+		"num_classes": 2
+	}
+    },
+    "data_loader": {
+        "type": "GsdOutcomeDataLoader",
+        "args":{
+            "imaging_dataset_path": "/Users/jk1/temp/scope_test/subset5_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
+            "outcome_file_path":  "/Users/jk1/temp/scope_test/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
+            "channels": [0,1,2,3],
+            "outcome": "combined_mRS_0-2_90_days",
+            "preload_data": true,
+            "augmentation": false,
+            "batch_size": 20,
+            "shuffle": true,
+            "validation_split": 0.1,
+            "num_workers": 2
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "accuracy", "top_k_acc", "roc_auc"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 50,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 200,
+
+        "save_dir": "/Users/jk1/temp/scope_test/",
+        "save_period": 5,
+        "verbosity": 2,
+        
+        "monitor": "min val_loss",
+        "early_stop": 200,
+
+        "tensorboard": true
+    }
+}

@@ -1,11 +1,11 @@
 {
-    "name": "EfficientNet3DModel_test",
+    "name": "EfficientNet3DModel_with_augment_test",
     "n_gpu": 1,
 
     "arch": {
         "type": "EfficientNet3DModel",
         "args": {
-		"num_classes": 7
+		"num_classes": 2
 	}
     },
     "data_loader": {
@@ -14,9 +14,9 @@
             "imaging_dataset_path": "/home/klug/working_data/perfusion_maps/no_GT/noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
             "outcome_file_path":  "/home/klug/working_data/clinical/clinical_outcome/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
             "channels": [0,1,2,3],
-            "outcome": "combined_mRS_90_days",
+            "outcome": "combined_mRS_0-2_90_days",
             "preload_data": true,
-            "batch_size": 2,
+            "batch_size": 20,
             "shuffle": true,
             "validation_split": 0.1,
             "num_workers": 2
@@ -32,7 +32,7 @@
     },
     "loss": "cross_entropy_loss",
     "metrics": [
-        "accuracy", "top_k_acc"
+        "accuracy", "top_k_acc", "roc_auc"
     ],
     "lr_scheduler": {
         "type": "StepLR",
