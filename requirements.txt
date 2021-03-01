@@ -8,3 +8,4 @@ pandas
 torchsummary
 xlrd
 openpyxl
+git+git://github.com/MonsieurWave/torchio#egg=torchio
