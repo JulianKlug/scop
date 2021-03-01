@@ -13,8 +13,8 @@ def gsd_pCT_train_transform(max_output_channels=2, random_flip_prob=0.5, random_
         seed = np.random.randint(0, 9999)  # seed must be an integer for torch
 
     train_transform = transforms.Compose([
-        ToTensor(),
-        ToFloat(),
+        # ToTensor(),
+        # ToFloat(),
         RandomFlipTransform(axes=flip_axis, flip_probability=flip_prob_per_axis, p=random_flip_prob,
                             seed=seed, max_output_channels=max_output_channels, prudent=prudent),
         RandomElasticTransform(max_displacement=max_deform,
@@ -26,10 +26,10 @@ def gsd_pCT_train_transform(max_output_channels=2, random_flip_prob=0.5, random_
                               isotropic=True, default_pad_value=0,
                               image_interpolation='bspline', seed=seed, p=random_affine_prob,
                               max_output_channels=max_output_channels, verbose=verbose, prudent=prudent),
-        # RandomNoiseTransform(mean=noise_mean, std=noise_std, seed=seed, p=random_noise_prob,
-        #                      max_output_channels=max_output_channels, prudent=prudent),
-        ChannelsFirst(),
-        ToFloat(),
+        RandomNoiseTransform(mean=noise_mean, std=noise_std, seed=seed, p=random_noise_prob,
+                             max_output_channels=max_output_channels, prudent=prudent),
+        # ChannelsFirst(),
+        # ToFloat(),
     ])
 
     return train_transform

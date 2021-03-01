@@ -40,7 +40,7 @@ class TorchIOTransformer(object):
 
         outputs = []
         for idx, _input in enumerate(inputs):
-            _input = _input.permute(3, 0, 1, 2)  # channels first for torchio
+            # _input = _input.permute(3, 0, 1, 2)  # channels first for torchio
             # Detect masks (label mask and brain mask)
             n_unique = list(_input.unique().size())[0]
             if n_unique <= self.max_output_channels or n_unique <= 2:
@@ -60,7 +60,7 @@ class TorchIOTransformer(object):
             else:
                 transformer = self.get_transformer()
                 input_tf = transformer(_input)
-            input_tf = input_tf.permute(1, 2, 3, 0)  # replace channels last
+            # input_tf = input_tf.permute(1, 2, 3, 0)  # replace channels last
 
             outputs.append(input_tf)
 

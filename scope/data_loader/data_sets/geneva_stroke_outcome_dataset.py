@@ -56,7 +56,7 @@ class GenevaStrokeOutcomeDataset(Dataset):
         '''
         Return sample at index
         :param index: int
-        :return: sample (x, y, z, c)
+        :return: sample (c, x, y, z)
         '''
 
         # load the images
