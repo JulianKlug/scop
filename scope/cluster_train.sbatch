@@ -11,13 +11,14 @@
 
 module load Anaconda3
 
+source /home/users/k/klug/.bashrc
+
 cd /home/users/k/klug/scope
 export PYTHONPATH=$(pwd)
-
 
 conda activate scope
 
 ulimit -S -n 131072
 ulimit -S -u 1546461
 
-srun python scope/train.py --c config/baobab_config.json
+srun python scope/train.py --c configs/baobab_config.json
