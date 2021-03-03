@@ -27,10 +27,11 @@ class MnistModel(BaseModel):
 
 
 class EfficientNet3DModel(BaseModel):
-    def __init__(self, num_classes=6, in_channels=4):
+    def __init__(self, num_classes=6, in_channels=4, drop_connect_rate=0.2):
         super().__init__()
 
-        self.model = EfficientNet3D.from_name("efficientnet-b0", override_params={'num_classes': num_classes}, in_channels=in_channels)
+        self.model = EfficientNet3D.from_name("efficientnet-b0", override_params={'num_classes': num_classes,
+                                                                                  'drop_connect_rate': drop_connect_rate}, in_channels=in_channels)
 
     def forward(self, x):
         return self.model(x)
