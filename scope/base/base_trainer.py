@@ -4,10 +4,12 @@ from numpy import inf
 from logger import TensorboardWriter
 import pandas as pd
 
+
 class BaseTrainer:
     """
     Base class for all trainers
     """
+
     def __init__(self, model, criterion, metric_ftns, optimizer, config):
         self.config = config
         self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
@@ -127,16 +129,13 @@ class BaseTrainer:
         if os.path.exists(self.experiment_dataframe_path):
             all_experiments_df = pd.read_csv(self.experiment_dataframe_path)
             if not self.config.uid in all_experiments_df['experiment_uid'].values:
-                pd.concat([all_experiments_df, current_experiment_df], axis=0, ignore_index=True)
+                all_experiments_df = pd.concat([all_experiments_df, current_experiment_df], axis=0, ignore_index=True)
             else:
                 all_experiments_df.loc[
                     all_experiments_df['experiment_uid'] == self.config.uid] = current_experiment_df
-            all_experiments_df.to_csv(self.experiment_dataframe_path)
+            all_experiments_df.to_csv(self.experiment_dataframe_path, index=False)
         else:
-            current_experiment_df.to_csv(self.experiment_dataframe_path)
-
-
-
+            current_experiment_df.to_csv(self.experiment_dataframe_path, index=False)
 
     def _save_checkpoint(self, epoch, save_best=False):
         """
