@@ -27,8 +27,8 @@ def roc_auc(label_pred, label_gt, positive_class=1):
     """
     with torch.no_grad():
         label_prob = torch.softmax(label_pred, dim=1)[:, positive_class]
-        y_true = label_gt.detach().numpy().flatten()
-        y_scores = label_prob.detach().numpy().flatten()
+        y_true = label_gt.detach().cpu().numpy().flatten()
+        y_scores = label_prob.detach().cpu().numpy().flatten()
 
         fpr, tpr, roc_thresholds = roc_curve(y_true, y_scores)
         roc_auc_score = auc(fpr, tpr)
@@ -41,8 +41,8 @@ def binary_roc_auc(label_pred, label_gt, positive_class=1):
     """
     with torch.no_grad():
         label_pred = torch.argmax(label_pred, dim=1)
-        y_true = label_gt.detach().numpy().flatten()
-        y_scores = label_pred.detach().numpy().flatten()
+        y_true = label_gt.detach().cpu().numpy().flatten()
+        y_scores = label_pred.detach().cpu().numpy().flatten()
 
         fpr, tpr, roc_thresholds = roc_curve(y_true, y_scores, pos_label=positive_class)
         roc_auc_score = auc(fpr, tpr)
