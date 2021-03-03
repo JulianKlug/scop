@@ -1,8 +1,8 @@
-import torch
+import torch, os
 from abc import abstractmethod
 from numpy import inf
 from logger import TensorboardWriter
-
+import pandas as pd
 
 class BaseTrainer:
     """
@@ -38,6 +38,7 @@ class BaseTrainer:
         self.start_epoch = 1
 
         self.checkpoint_dir = config.save_dir
+        self.experiment_dataframe_path = config.config['trainer']['experiment_dataframe_path']
 
         # setup visualization writer instance                
         self.writer = TensorboardWriter(config.log_dir, self.logger, cfg_trainer['tensorboard'])
@@ -87,6 +88,7 @@ class BaseTrainer:
                     self.mnt_best = log[self.mnt_metric]
                     not_improved_count = 0
                     best = True
+                    self._update_experiments_dataframe(epoch, result)
                 else:
                     not_improved_count += 1
 
@@ -97,6 +99,44 @@ class BaseTrainer:
 
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch, save_best=best)
+
+    def _update_experiments_dataframe(self, epoch, result_dict):
+
+        experiment_dict = dict({
+            'experiment_uid': self.config.uid,
+            'architecture': type(self.model).__name__,
+            'epoch': epoch,
+            'optimizer': type(self.optimizer).__name__,
+            'loss_function': self.config.config['loss'],
+            'monitor': self.monitor,
+            "imaging_dataset_path": self.config.config['data_loader']['args']['imaging_dataset_path'],
+            "outcome_file_path": self.config.config['data_loader']['args']['outcome_file_path'],
+            "checkpoint_dir": self.checkpoint_dir,
+            "channels": [self.config.config['data_loader']['args']['channels']],
+            "outcome": self.config.config['data_loader']['args']['outcome'],
+            "augmentation": self.config.config['data_loader']['args']['augmentation'],
+            "batch_size": self.config.config['data_loader']['args']['batch_size'],
+        })
+
+        experiment_dict.update(self.config.config['optimizer']['args'])
+        experiment_dict.update(self.config.config['arch']['args'])
+        experiment_dict.update(result_dict)
+
+        current_experiment_df = pd.DataFrame(experiment_dict, index=[0])
+
+        if os.path.exists(self.experiment_dataframe_path):
+            all_experiments_df = pd.read_csv(self.experiment_dataframe_path)
+            if not self.config.uid in all_experiments_df['experiment_uid'].values:
+                pd.concat([all_experiments_df, current_experiment_df], axis=0, ignore_index=True)
+            else:
+                all_experiments_df.loc[
+                    all_experiments_df['experiment_uid'] == self.config.uid] = current_experiment_df
+            all_experiments_df.to_csv(self.experiment_dataframe_path)
+        else:
+            current_experiment_df.to_csv(self.experiment_dataframe_path)
+
+
+
 
     def _save_checkpoint(self, epoch, save_best=False):
         """

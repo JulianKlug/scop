@@ -1,5 +1,7 @@
 import argparse
 import collections
+import uuid
+
 import torch
 import numpy as np
 import data_loader.data_loaders as module_data
@@ -19,6 +21,7 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 def main(config):
+    config.uid = uuid.uuid4().hex
     logger = config.get_logger('train')
 
     # setup data_loader instances
