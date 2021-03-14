@@ -1,12 +1,11 @@
 {
-    "name": "EfficientNet3DModel_with_dropout_test",
+    "name": "Resnet_test",
     "n_gpu": 1,
 
     "arch": {
-        "type": "EfficientNet3DModel",
+        "type": "Resnet3D_18L",
         "args": {
-		"num_classes": 2,
-        "drop_connect_rate": 0.9
+		"num_classes": 2
 	}
     },
     "data_loader": {
@@ -47,7 +46,7 @@
         "epochs": 200,
 
         "save_dir": "/home/klug/output/scope",
-        "experiment_dataframe_path": "/home/klug/output/scope/experiment_df.csv",
+        "experiment_dataframe_path": "/home/klug/output/scope/experiment_df_test.csv",
         "save_period": 5,
         "verbosity": 2,
         

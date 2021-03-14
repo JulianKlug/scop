@@ -8,4 +8,6 @@ pandas
 torchsummary
 xlrd
 openpyxl
+matplotlib
 git+git://github.com/MonsieurWave/torchio#egg=torchio
+git+git://github.com/shijianjian/EfficientNet-PyTorch-3D#egg=efficientnet_pytorch_3d

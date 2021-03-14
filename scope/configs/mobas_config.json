@@ -20,8 +20,9 @@
             "augmentation": false,
             "batch_size": 20,
             "shuffle": true,
-            "validation_split": 0.2,
-            "num_workers": 2
+            "validation_split": 0.5,
+            "num_workers": 2,
+            "stratify": true
         }
     },
     "optimizer": {

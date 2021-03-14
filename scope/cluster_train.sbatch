@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=train_scope    # Job name
-#SBATCH --partition=shared-gpu
+#SBATCH --partition=debug-gpu
 #SBATCH --gres=gpu:titan:1                    # Number of GPUs
 #SBATCH --ntasks=1
 #SBATCH --mem=30G                     # Job memory request
@@ -21,4 +21,4 @@ conda activate scope
 ulimit -S -n 131072
 ulimit -S -u 1546461
 
-srun python scope/train.py --c configs/baobab_config.json
+srun python scope/train.py --c /home/users/k/klug/scope/scope/configs/unige_slurm_config.json

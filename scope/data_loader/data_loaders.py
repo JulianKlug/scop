@@ -23,7 +23,7 @@ class MnistDataLoader(BaseDataLoader):
 
 class GsdOutcomeDataLoader(BaseDataLoader):
     def __init__(self, imaging_dataset_path, outcome_file_path, channels, outcome, preload_data, batch_size,
-                 shuffle=True, validation_split=0.0, num_workers=1, augmentation=True):
+                 shuffle=True, validation_split=0.0, num_workers=1, augmentation=True, training=True, stratify=True):
 
         if augmentation:
             transforms = gsd_pCT_train_transform()
@@ -31,6 +31,6 @@ class GsdOutcomeDataLoader(BaseDataLoader):
             transforms = None
 
         self.dataset = GenevaStrokeOutcomeDataset(imaging_dataset_path, outcome_file_path, channels, outcome, transform=transforms, preload_data=preload_data)
-        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers, stratify=stratify)
 
 

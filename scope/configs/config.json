@@ -1,12 +1,12 @@
 {
-    "name": "EfficientNet3DModel_with_dropout_test",
+    "name": "EfficientNet3DModel_with_dropout_on_stratified_data",
     "n_gpu": 1,
 
     "arch": {
         "type": "EfficientNet3DModel",
         "args": {
 		"num_classes": 2,
-        "drop_connect_rate": 0.9
+        "drop_connect_rate": 0.8
 	}
     },
     "data_loader": {
@@ -21,7 +21,8 @@
             "batch_size": 20,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 10
+            "num_workers": 2,
+            "stratify": true
         }
     },
     "optimizer": {
@@ -44,7 +45,7 @@
         }
     },
     "trainer": {
-        "epochs": 200,
+        "epochs": 1000,
 
         "save_dir": "/home/klug/output/scope",
         "experiment_dataframe_path": "/home/klug/output/scope/experiment_df.csv",
@@ -52,7 +53,7 @@
         "verbosity": 2,
         
         "monitor": "min val_loss",
-        "early_stop": 200,
+        "early_stop": 1000,
 
         "tensorboard": true
     }
