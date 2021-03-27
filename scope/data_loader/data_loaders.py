@@ -3,8 +3,7 @@ from torchvision import datasets, transforms
 from base import BaseDataLoader
 
 from data_loader.data_sets.geneva_stroke_outcome_dataset import GenevaStrokeOutcomeDataset
-
-from data_loader.transformation_sequences import gsd_pCT_train_transform, gsd_pCT_valid_transform
+from data_loader.augmentation.DKFZ_transformation_sequences import get_DKFZ_augmentation_sequence
 
 
 class MnistDataLoader(BaseDataLoader):
@@ -26,11 +25,12 @@ class GsdOutcomeDataLoader(BaseDataLoader):
                  shuffle=True, validation_split=0.0, num_workers=1, augmentation=True, training=True, stratify=True):
 
         if augmentation:
-            transforms = gsd_pCT_train_transform()
+            train_transforms, val_transforms = get_DKFZ_augmentation_sequence()
         else:
-            transforms = None
+            train_transforms, val_transforms = None, None
 
-        self.dataset = GenevaStrokeOutcomeDataset(imaging_dataset_path, outcome_file_path, channels, outcome, transform=transforms, preload_data=preload_data)
-        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers, stratify=stratify)
+        self.dataset = GenevaStrokeOutcomeDataset(imaging_dataset_path, outcome_file_path, channels, outcome, transform=train_transforms, preload_data=preload_data)
+        self.val_dataset = GenevaStrokeOutcomeDataset(imaging_dataset_path, outcome_file_path, channels, outcome, transform=val_transforms, preload_data=preload_data)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers, stratify=stratify, val_dataset=self.val_dataset)
 
 

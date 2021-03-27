@@ -27,6 +27,25 @@ class ToFloat(object):
         return input.to(torch.float32)
 
 
+class ToDataDictionary():
+    """Convert to data dictionary
+    """
+
+    def __call__(self, data):
+        print('yooooo', data.shape)
+
+        data_dict = {'data': data}
+
+        return data_dict
+
+
+class StripDataDictionary(object):
+    """Convert to float tensor."""
+
+    def __call__(self, input, data_key='data'):
+        return input[data_key]
+
+
 class TorchIOTransformer(object):
     def __init__(self, get_transformer, max_output_channels=10, prudent=True, verbose=False):
         self.get_transformer = get_transformer

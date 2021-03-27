@@ -1,4 +1,4 @@
-import torch, os
+import torch, os, optuna
 from abc import abstractmethod
 from numpy import inf
 from logger import TensorboardWriter
@@ -10,7 +10,7 @@ class BaseTrainer:
     Base class for all trainers
     """
 
-    def __init__(self, model, criterion, metric_ftns, optimizer, config):
+    def __init__(self, model, criterion, metric_ftns, optimizer, config, hyperopt_trial=None):
         self.config = config
         self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
 
@@ -18,6 +18,7 @@ class BaseTrainer:
         self.criterion = criterion
         self.metric_ftns = metric_ftns
         self.optimizer = optimizer
+        self.hyperopt_trial = hyperopt_trial
 
         cfg_trainer = config['trainer']
         self.epochs = cfg_trainer['epochs']
@@ -36,6 +37,9 @@ class BaseTrainer:
             self.early_stop = cfg_trainer.get('early_stop', inf)
             if self.early_stop <= 0:
                 self.early_stop = inf
+
+        if hyperopt_trial is not None:
+            self.hyperopt_monitor = cfg_trainer['hyperopt_monitor']
 
         self.start_epoch = 1
 
@@ -72,6 +76,14 @@ class BaseTrainer:
             # print logged informations to the screen
             for key, value in log.items():
                 self.logger.info('    {:15s}: {}'.format(str(key), value))
+
+            # parameter evaluation for hyperparameter tuning
+            if self.hyperopt_trial is not None:
+                self.hyperopt_trial.report(log[self.hyperopt_monitor], epoch)
+
+                # Handle pruning based on the intermediate value.
+                if self.hyperopt_trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False

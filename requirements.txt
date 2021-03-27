@@ -1,4 +1,5 @@
 torch>=1.1
+batchgenerators
 torchvision
 numpy
 tqdm
@@ -8,6 +9,7 @@ pandas
 torchsummary
 xlrd
 openpyxl
+optuna
 matplotlib
 git+git://github.com/MonsieurWave/torchio#egg=torchio
 git+git://github.com/shijianjian/EfficientNet-PyTorch-3D#egg=efficientnet_pytorch_3d

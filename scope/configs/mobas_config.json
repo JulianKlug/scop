@@ -1,5 +1,5 @@
 {
-    "name": "EfficientNet3DModel_dropout_test",
+    "name": "EfficientNet3DModel_augment_test",
     "n_gpu": 1,
 
     "arch": {
@@ -17,7 +17,7 @@
             "channels": [0,1,2,3],
             "outcome": "combined_mRS_0-2_90_days",
             "preload_data": true,
-            "augmentation": false,
+            "augmentation": true,
             "batch_size": 20,
             "shuffle": true,
             "validation_split": 0.5,

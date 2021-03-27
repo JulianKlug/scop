@@ -83,11 +83,15 @@ class GenevaStrokeOutcomeDataset(Dataset):
         target = self.raw_labels[index]
         id = self.ids[index]
 
-        input = torch.tensor(input).permute(3, 0, 1, 2).to(torch.float32)
+        # input = torch.from_numpy(input).permute(3, 0, 1, 2).to(torch.float32)
+        input = np.transpose(input, (3, 0, 1, 2))
 
         # apply transformations
         if self.transform:
-            input = self.transform(input)
+            # transiently transform into dictionary to use DKFZ augmentation
+            data_dict = {'data': input}
+            input = self.transform(**data_dict)['data']
+            input = torch.from_numpy(input).to(torch.float32)
 
         return input, target, id
 
