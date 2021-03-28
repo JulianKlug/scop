@@ -40,6 +40,7 @@ class BaseTrainer:
 
         if hyperopt_trial is not None:
             self.hyperopt_monitor = cfg_trainer['hyperopt_monitor']
+            self.hyperopt_monitor_best = 0
 
         self.start_epoch = 1
 
@@ -80,6 +81,8 @@ class BaseTrainer:
             # parameter evaluation for hyperparameter tuning
             if self.hyperopt_trial is not None:
                 self.hyperopt_trial.report(log[self.hyperopt_monitor], epoch)
+                if log[self.hyperopt_monitor] >= self.hyperopt_monitor_best:
+                    self.hyperopt_monitor_best = log[self.hyperopt_monitor]
 
                 # Handle pruning based on the intermediate value.
                 if self.hyperopt_trial.should_prune():

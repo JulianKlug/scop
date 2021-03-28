@@ -12,15 +12,15 @@
     "data_loader": {
         "type": "GsdOutcomeDataLoader",
         "args":{
-            "imaging_dataset_path": "/home/users/k/klug/data/scope/train_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
-            "outcome_file_path":  "/home/users/k/klug/data/scope/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
+            "imaging_dataset_path": "/Users/jk1/temp/scope_test/subset5_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
+            "outcome_file_path":  "/Users/jk1/temp/scope_test/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
             "channels": [0,1,2,3],
             "outcome": "combined_mRS_0-2_90_days",
             "preload_data": true,
             "augmentation": true,
             "batch_size": [10, 20, 60, 100],
             "shuffle": true,
-            "validation_split": 0.1,
+            "validation_split": 0.5,
             "num_workers": 2,
             "stratify": true
         }
@@ -40,16 +40,16 @@
          "args": {}
     },
     "trainer": {
-        "epochs": 200,
+        "epochs": 2,
 
-        "save_dir": "/home/users/k/klug/output/scope",
-        "experiment_dataframe_path": "/home/users/k/klug/output/scope/experiment_df_test.csv",
+        "save_dir": "/Users/jk1/temp/scope_test/",
+        "experiment_dataframe_path": "/Users/jk1/temp/scope_test/experiment_df.csv",
         "save_period": 5,
         "verbosity": 0,
 
         "hyperopt_monitor": "val_roc_auc",
         "monitor": "min val_loss",
-        "early_stop": 200,
+        "early_stop": 2,
 
         "tensorboard": true
     }

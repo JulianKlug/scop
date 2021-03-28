@@ -1,4 +1,5 @@
 import argparse, os
+import copy
 from datetime import datetime
 import uuid
 
@@ -24,66 +25,64 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 
-class ObjectiveConfigurator():
-    def __init__(self, config):
-        self.config = config
-
-    def objective(self, trial):
-        self.config.uid = uuid.uuid4().hex
-        self.config._log_dir = Path(os.path.join(self.config.log_dir.parent, self.config.uid))
-        self.config._save_dir = Path(os.path.join(self.config.save_dir, self.config.uid))
-        ensure_dir(self.config.log_dir)
-        ensure_dir(self.config.save_dir)
+def objective_configurator(config):
+    def objective(trial):
+        objective_config = copy.deepcopy(config)
+        objective_config.uid = uuid.uuid4().hex
+        objective_config._log_dir = Path(os.path.join(objective_config.log_dir.parent, objective_config.uid))
+        objective_config._save_dir = Path(os.path.join(objective_config.save_dir, objective_config.uid))
+        ensure_dir(objective_config.log_dir)
+        ensure_dir(objective_config.save_dir)
 
         # overwrite parameters chosen by hyperoptimization
-        optimizer_name = trial.suggest_categorical("optimizer", self.config.config['optimizer']['type'])
-        self.config.config['optimizer']['type'] = optimizer_name
-        lr = trial.suggest_float("lr", self.config.config['optimizer']["args"]["lr"][0], self.config.config['optimizer']["args"]["lr"][1], log=True)
-        self.config.config['optimizer']["args"]["lr"] = lr
+        optimizer_name = trial.suggest_categorical("optimizer", objective_config.config['optimizer']['type'])
+        objective_config.config['optimizer']['type'] = optimizer_name
+        lr = trial.suggest_float("lr", objective_config.config['optimizer']["args"]["lr"][0], objective_config.config['optimizer']["args"]["lr"][1], log=True)
+        objective_config.config['optimizer']["args"]["lr"] = lr
 
-        lr_scheduler_name = trial.suggest_categorical("lr_scheduler", self.config.config['lr_scheduler']['type'])
-        self.config.config['lr_scheduler']['type'] = lr_scheduler_name
+        lr_scheduler_name = trial.suggest_categorical("lr_scheduler", objective_config.config['lr_scheduler']['type'])
+        objective_config.config['lr_scheduler']['type'] = lr_scheduler_name
         if lr_scheduler_name == "StepLR":
-            self.config.config['lr_scheduler']['args']["step_size"] = 50
+            objective_config.config['lr_scheduler']['args']["step_size"] = 50
 
-        drop_connect_rate = trial.suggest_float("drop_connect_rate", self.config.config['arch']['args']["drop_connect_rate"][0],
-                                                self.config.config['arch']['args']["drop_connect_rate"][1], step=0.1)
-        self.config.config['arch']['args']["drop_connect_rate"] = drop_connect_rate
+        drop_connect_rate = trial.suggest_float("drop_connect_rate", objective_config.config['arch']['args']["drop_connect_rate"][0],
+                                                objective_config.config['arch']['args']["drop_connect_rate"][1], step=0.1)
+        objective_config.config['arch']['args']["drop_connect_rate"] = drop_connect_rate
 
-        batch_size = trial.suggest_categorical("batch_size", self.config.config['data_loader']['args']['batch_size'])
-        self.config.config['data_loader']['args']['batch_size'] = batch_size
+        batch_size = trial.suggest_categorical("batch_size", objective_config.config['data_loader']['args']['batch_size'])
+        objective_config.config['data_loader']['args']['batch_size'] = batch_size
 
         # save new config
-        write_json(self.config.config, self.config.save_dir / 'config.json')
+        write_json(objective_config.config, objective_config.save_dir / 'config.json')
 
         # Now initiating all objects from the new config
-        logger = self.config.get_logger('hyperopt')
+        logger = objective_config.get_logger('hyperopt')
 
         # setup data_loader instances
-        data_loader = self.config.init_obj('data_loader', module_data)
+        data_loader = objective_config.init_obj('data_loader', module_data)
         valid_data_loader = data_loader.split_validation()
 
         # build model architecture, then print to console
-        model = self.config.init_obj('arch', module_arch)
+        model = objective_config.init_obj('arch', module_arch)
         logger.info(model)
 
         # prepare for (multi-device) GPU training
-        device, device_ids = prepare_device(self.config['n_gpu'])
+        device, device_ids = prepare_device(objective_config['n_gpu'])
         model = model.to(device)
         if len(device_ids) > 1:
             model = torch.nn.DataParallel(model, device_ids=device_ids)
 
         # get function handles of loss and metrics
-        criterion = getattr(module_loss, self.config['loss'])
-        metrics = [getattr(module_metric, met) for met in self.config['metrics']]
+        criterion = getattr(module_loss, objective_config['loss'])
+        metrics = [getattr(module_metric, met) for met in objective_config['metrics']]
 
         # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
         trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-        optimizer = self.config.init_obj('optimizer', torch.optim, trainable_params)
-        lr_scheduler = self.config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
+        optimizer = objective_config.init_obj('optimizer', torch.optim, trainable_params)
+        lr_scheduler = objective_config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
         trainer = Trainer(model, criterion, metrics, optimizer,
-                          config=self.config,
+                          config=objective_config,
                           device=device,
                           data_loader=data_loader,
                           valid_data_loader=valid_data_loader,
@@ -92,16 +91,19 @@ class ObjectiveConfigurator():
 
         trainer.train()
 
+        return trainer.hyperopt_monitor_best
+    return objective
+
+
 
 def hyperopt(config):
     # todo enable to load from saved prior study
     run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-    configured_objective = ObjectiveConfigurator(config)
 
     study = optuna.create_study(study_name=config.config['name'] + '_' + run_id, direction="maximize",
                                 sampler=optuna.samplers.TPESampler(), pruner=optuna.pruners.HyperbandPruner())
     joblib.dump(study, os.path.join(config.save_dir, "hyperopt_study.pkl"))
-    study.optimize(configured_objective.objective, n_trials=100, timeout=12000)
+    study.optimize(objective_configurator(config), timeout=162000)  # 45h
     joblib.dump(study, os.path.join(config.save_dir, "hyperopt_study.pkl"))
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
