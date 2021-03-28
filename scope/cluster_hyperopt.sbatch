@@ -4,7 +4,8 @@
 #SBATCH --gres=gpu:1                    # Number of GPUs
 #SBATCH --ntasks=1
 #SBATCH --mem=30G                     # Job memory request
-#SBATCH --time=:2-00:00:00               # Time limit hrs:min:sec
+#SBATCH --time=47:59:00               # Time limit hrs:min:sec
+#SBATCH --cpus-per-task=16
 #SBATCH --output=/home/users/k/klug/logs/scope/hyperopt_scope_%j.log   # Standard output and error log
 
 
