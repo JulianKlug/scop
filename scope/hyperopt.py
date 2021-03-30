@@ -1,5 +1,6 @@
 import argparse, os
 import copy
+import shutil
 from datetime import datetime
 import uuid
 
@@ -95,16 +96,32 @@ def objective_configurator(config):
     return objective
 
 
+class StudySaverCallback:
+    def __init__(self, save_path: str):
+        self.save_path = save_path
 
-def hyperopt(config):
-    # todo enable to load from saved prior study
-    run_id = datetime.now().strftime(r'%m%d_%H%M%S')
+    def __call__(self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial) -> None:
+        joblib.dump(study, self.save_path)
 
-    study = optuna.create_study(study_name=config.config['name'] + '_' + run_id, direction="maximize",
-                                sampler=optuna.samplers.TPESampler(), pruner=optuna.pruners.HyperbandPruner())
-    joblib.dump(study, os.path.join(config.save_dir, "hyperopt_study.pkl"))
-    study.optimize(objective_configurator(config), timeout=162000)  # 45h
-    joblib.dump(study, os.path.join(config.save_dir, "hyperopt_study.pkl"))
+
+def hyperopt(config, old_study_path=None):
+
+    if old_study_path is None:
+        run_id = datetime.now().strftime(r'%m%d_%H%M%S')
+        study = optuna.create_study(study_name=config.config['name'] + '_' + run_id, direction="maximize",
+                                    sampler=optuna.samplers.TPESampler(), pruner=optuna.pruners.HyperbandPruner())
+        study_path = os.path.join(config.save_dir, "hyperopt_study.pkl")
+        joblib.dump(study, study_path)
+    else:
+        study = joblib.load(old_study_path)
+        study_path = old_study_path
+
+        shutil.rmtree(config.save_dir)
+        config._save_dir = os.path.dirname(study_path)
+
+    study_saver_cb = StudySaverCallback(study_path)
+    study.optimize(objective_configurator(config), callbacks=[study_saver_cb], timeout=162000)  # 45h
+    joblib.dump(study, study_path)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
@@ -128,6 +145,8 @@ if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
     args.add_argument('-c', '--config', default=None, type=str,
                       help='config file path (default: None)')
+    args.add_argument('-s', '--study_path', default=None, type=str,
+                      help='Path to already existent hyperopt study (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
@@ -135,4 +154,5 @@ if __name__ == '__main__':
 
     options = []
     config = ConfigParser.from_args(args, options)
-    hyperopt(config)
+    args = args.parse_args()
+    hyperopt(config, args.study_path)
