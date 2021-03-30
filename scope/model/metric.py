@@ -30,8 +30,17 @@ def roc_auc(label_pred, label_gt, positive_class=1):
         y_true = label_gt.detach().cpu().numpy().flatten()
         y_scores = label_prob.detach().cpu().numpy().flatten()
 
-        fpr, tpr, roc_thresholds = roc_curve(y_true, y_scores)
-        roc_auc_score = auc(fpr, tpr)
+        try:
+            fpr, tpr, roc_thresholds = roc_curve(y_true, y_scores)
+            roc_auc_score = auc(fpr, tpr)
+        except:
+            print('YOOOOOOOO')
+            print(y_true)
+            print(y_scores)
+            print('YOOOOOOOO')
+            print('-----------------------------------------------------------------------------------------------')
+            roc_auc_score = 0
+
     return roc_auc_score
 
 
