@@ -1,61 +1,48 @@
+from datetime import datetime
+import os
 import numpy as np
 import tensorflow as tf
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
+from augmentation import rotate
+from model import get_model
+from preprocessing import min_max_normalize, resize_volume
 
-def train_preprocessing(volume, label):
+
+def image_preprocessing(volume, min, max, desired_shape):
+    volume = min_max_normalize(volume, min, max)
+    # Resize width, height and depth
+    volume = resize_volume(volume, desired_shape[0], desired_shape[1], desired_shape[2])
+    return volume
+
+
+def train_augmentation(volume, label):
     """Process training data by rotating and adding a channel."""
-    # Rotate volume
+    volume = rotate(volume)
     volume = tf.expand_dims(volume, axis=3)
     return volume, label
 
 
-def validation_preprocessing(volume, label):
+def validation_augmentation(volume, label):
     """Process validation data by only adding a channel."""
     volume = tf.expand_dims(volume, axis=3)
     return volume, label
 
-def get_model(width=128, height=128, depth=64):
-    """Build a 3D convolutional neural network model."""
-
-    inputs = keras.Input((width, height, depth, 1))
-
-    x = layers.Conv3D(filters=64, kernel_size=3, activation="relu")(inputs)
-    x = layers.MaxPool3D(pool_size=2)(x)
-    x = layers.BatchNormalization()(x)
-
-    x = layers.Conv3D(filters=64, kernel_size=3, activation="relu")(x)
-    x = layers.MaxPool3D(pool_size=2)(x)
-    x = layers.BatchNormalization()(x)
-
-    x = layers.Conv3D(filters=128, kernel_size=3, activation="relu")(x)
-    x = layers.MaxPool3D(pool_size=2)(x)
-    x = layers.BatchNormalization()(x)
-
-    x = layers.Conv3D(filters=256, kernel_size=3, activation="relu")(x)
-    x = layers.MaxPool3D(pool_size=2)(x)
-    x = layers.BatchNormalization()(x)
-
-    x = layers.GlobalAveragePooling3D()(x)
-    x = layers.Dense(units=512, activation="relu")(x)
-    x = layers.Dropout(0.3)(x)
-
-    outputs = layers.Dense(units=1, activation="sigmoid")(x)
-
-    # Define the model.
-    model = keras.Model(inputs, outputs, name="3dcnn")
-    return model
 
 def main():
-    label_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv'
-    data_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy'
+    label_file_path = '/home/klug/working_data/leftright_dataset/labels.csv'
+    data_file_path = '/home/klug/working_data/leftright_dataset/data.npy'
+    main_log_dir = '/home/klug/output/leftright'
+
+    # label_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv'
+    # data_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy'
+    desired_shape = (46, 46, 46)
     split_ratio = 0.3
     batch_size = 2
-    epochs = 100
+    epochs = 20
     initial_learning_rate = 0.0001
 
     outcomes_df = pd.read_csv(label_file_path, index_col=0)
@@ -63,8 +50,10 @@ def main():
 
     images = np.load(data_file_path)
 
+    images = np.array([image_preprocessing(image,  min=0, max=1, desired_shape=desired_shape) for image in images])
+
     x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=split_ratio, random_state=42,
-                                            shuffle=True, stratify=labels)
+                                                      shuffle=True, stratify=labels)
 
     # Define data loaders.
     train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
@@ -73,20 +62,20 @@ def main():
     # Augment the on the fly during training.
     train_dataset = (
         train_loader.shuffle(len(x_train))
-            .map(train_preprocessing)
+            .map(train_augmentation)
             .batch(batch_size)
             .prefetch(2)
     )
     # Only rescale.
     validation_dataset = (
         validation_loader.shuffle(len(x_val))
-            .map(validation_preprocessing)
+            .map(validation_augmentation)
             .batch(batch_size)
             .prefetch(2)
     )
 
     # Build model.
-    model = get_model(width=64, height=64, depth=64)
+    model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2])
     model.summary()
 
     # Compile model.
@@ -104,6 +93,8 @@ def main():
         "3d_image_classification.h5", save_best_only=True
     )
     early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_acc", patience=15)
+    logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
+    tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
     # Train the model, doing validation at the end of each epoch
     model.fit(
@@ -112,19 +103,8 @@ def main():
         epochs=epochs,
         shuffle=True,
         verbose=2,
-        callbacks=[checkpoint_cb, early_stopping_cb],
+        callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_callback],
     )
-
-    fig, ax = plt.subplots(1, 2, figsize=(20, 3))
-    ax = ax.ravel()
-
-    for i, metric in enumerate(["acc", "loss"]):
-        ax[i].plot(model.history.history[metric])
-        ax[i].plot(model.history.history["val_" + metric])
-        ax[i].set_title("Model {}".format(metric))
-        ax[i].set_xlabel("epochs")
-        ax[i].set_ylabel(metric)
-        ax[i].legend(["train", "val"])
 
 
 if __name__ == '__main__':
