@@ -13,6 +13,7 @@ from utils.plot_ROC import plot_roc
 
 def main(config, output_dir=None):
     logger = config.get_logger('test')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if output_dir is None:
         output_dir = os.path.join(os.path.dirname(config.resume), os.path.basename(config.resume).split('.')[0])
@@ -21,7 +22,7 @@ def main(config, output_dir=None):
     # setup data_loader instances
     data_loader = getattr(module_data, config['data_loader']['type'])(
         config.config['test_data_path'],
-        outcome_file_path=config['data_loader']['args']['outcome_file_path'],
+        outcome_file_path=config.config['test_outcome_data'],
         outcome=config['data_loader']['args']['outcome'],
         channels=config['data_loader']['args']['channels'],
         preload_data=True,
@@ -43,15 +44,15 @@ def main(config, output_dir=None):
 
     logger.info('Loading checkpoint: {} ...'.format(config.resume))
     config.config['checkpoint'] = str(config.resume)
-    checkpoint = torch.load(config.resume)
+    checkpoint = torch.load(config.resume, map_location=torch.device(device))
     state_dict = checkpoint['state_dict']
     if config['n_gpu'] > 1:
         model = torch.nn.DataParallel(model)
     model.load_state_dict(state_dict)
 
     # prepare model for testing
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
+    model = model.double()
     model.eval()
 
     total_loss = 0.0
@@ -111,6 +112,8 @@ if __name__ == '__main__':
                       help='config file path (default: None)')
     args.add_argument('-t', '--test-data', default=None, type=str,
                       help='test data file path (default: None)')
+    args.add_argument('-gt', '--test-outcome-data', default=None, type=str,
+                      help='file path for ground truth outcomes for test data (default: None)')
     args.add_argument('-o', '--output', default=None, type=str,
                       help='path to output dir (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
@@ -118,7 +121,8 @@ if __name__ == '__main__':
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')
 
-    config = ConfigParser.from_args(args, save_config=False)
+    config = ConfigParser.from_args(args, save_config=True)
     args = args.parse_args()
     config.config['test_data_path'] = args.test_data
+    config.config['test_outcome_data'] = args.test_outcome_data
     main(config, args.output)
