@@ -1,0 +1,62 @@
+{
+    "name": "EfficientNet3DModel_leftright_test_resume",
+    "n_gpu": 1,
+
+    "arch": {
+        "type": "EfficientNet3DModel",
+        "args": {
+		"num_classes": 2,
+        "in_channels": 1,
+        "drop_connect_rate": 0.5
+	}
+    },
+    "data_loader": {
+        "type": "LeftRightDataLoader",
+        "args":{
+            "imaging_dataset_path": "/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy",
+            "outcome_file_path":  "/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv",
+            "preload_data": true,
+            "augmentation": false,
+            "batch_size": 20,
+            "channels": [1],
+            "outcome": "right",
+            "shuffle": true,
+            "validation_split": 0.75,
+            "num_workers": 2,
+            "stratify": true
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "loss": "cross_entropy_loss",
+    "metrics": [
+        "accuracy", "top_k_acc", "roc_auc", "binary_roc_auc", "recall", "specificity", "precision", "f1", "jaccard"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 50,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 200,
+
+        "save_dir": "/Users/jk1/temp/leftright_test/",
+        "experiment_dataframe_path": "/Users/jk1/temp/leftright_test/experiment_df.csv",
+        "save_period": 5,
+        "verbosity": 2,
+        
+        "monitor": "min val_loss",
+        "early_stop": 200,
+        "resume": "/Users/jk1/temp/leftright_test/models/EfficientNet3DModel_leftright_test/0426_105420/checkpoint-epoch200.pth",
+
+        "tensorboard": true
+    }
+}

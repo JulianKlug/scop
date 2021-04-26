@@ -30,8 +30,11 @@ class EfficientNet3DModel(BaseModel):
     def __init__(self, num_classes=6, in_channels=4, drop_connect_rate=0.2):
         super().__init__()
 
-        self.model = EfficientNet3D.from_name("efficientnet-b0", override_params={'num_classes': num_classes,
-                                                                                  'drop_connect_rate': drop_connect_rate}, in_channels=in_channels)
+        self.model = EfficientNet3D.from_name("efficientnet-b0", override_params={
+            'num_classes': num_classes,
+            'drop_connect_rate': drop_connect_rate
+        }
+                                              , in_channels=in_channels)
 
     def forward(self, x):
         return self.model(x)
@@ -47,7 +50,7 @@ class Resnet3D_18L(BaseModel):
         self.model = models.video.r3d_18(pretrained=True, progress=True)
 
         self.model.stem[0] = nn.Conv3d(in_channels, 64, kernel_size=(3, 7, 7), stride=(1, 2, 2),
-                      padding=(1, 3, 3), bias=False)
+                                       padding=(1, 3, 3), bias=False)
 
         num_ftrs = self.model.fc.in_features
         self.model.fc = nn.Linear(num_ftrs, num_classes)

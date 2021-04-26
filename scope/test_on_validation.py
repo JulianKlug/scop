@@ -30,7 +30,6 @@ def main(config, output_dir=None):
         batch_size=512,
         validation_split=config['data_loader']['args']['validation_split'],
         shuffle=False,
-        training=False,
         num_workers=2
     )
     valid_data_loader = data_loader.split_validation()
@@ -54,7 +53,7 @@ def main(config, output_dir=None):
 
     # prepare model for testing
     model = model.to(device)
-    model = model.double()
+    # model = model.double()
     model.eval()
 
     total_loss = 0.0
