@@ -41,9 +41,6 @@ def roc_auc(label_pred, label_gt, positive_class=1):
             print('-----------------------------------------------------------------------------------------------')
             roc_auc_score = 0
 
-    from sklearn.metrics import roc_auc_score as ras
-    ras_score = ras(y_true, y_scores)
-
     return roc_auc_score
 
 
