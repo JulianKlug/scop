@@ -2,10 +2,10 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 
-def get_model(width=128, height=128, depth=64):
+def get_model(width=128, height=128, depth=64, channels=1):
     """Build a 3D convolutional neural network model."""
 
-    inputs = keras.Input((width, height, depth, 1))
+    inputs = keras.Input((width, height, depth, channels))
 
     x = layers.Conv3D(filters=64, kernel_size=3, activation="relu")(inputs)
     x = layers.MaxPool3D(pool_size=2)(x)

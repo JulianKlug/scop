@@ -1,81 +1,39 @@
 from datetime import datetime
 import os
-import numpy as np
-import tensorflow as tf
-import pandas as pd
-from sklearn.model_selection import train_test_split
 from tensorflow import keras
-import matplotlib.pyplot as plt
-
-from augmentation import rotate
+# from datasets.leftright_dataset import get_LeftRightDataset
+from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from model import get_model
-from preprocessing import min_max_normalize, resize_volume
-
-
-def image_preprocessing(volume, min, max, desired_shape):
-    volume = min_max_normalize(volume, min, max)
-    # Resize width, height and depth
-    volume = resize_volume(volume, desired_shape[0], desired_shape[1], desired_shape[2])
-    return volume
-
-
-def train_augmentation(volume, label):
-    """Process training data by rotating and adding a channel."""
-    volume = rotate(volume)
-    volume = tf.expand_dims(volume, axis=3)
-    return volume, label
-
-
-def validation_augmentation(volume, label):
-    """Process validation data by only adding a channel."""
-    volume = tf.expand_dims(volume, axis=3)
-    return volume, label
 
 
 def main():
-    label_file_path = '/home/klug/working_data/leftright_dataset/labels.csv'
-    data_file_path = '/home/klug/working_data/leftright_dataset/data.npy'
-    main_log_dir = '/home/klug/output/leftright'
-
     # label_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv'
-    # data_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy'
+    # imaging_dataset_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy'
+    # desired_shape = (46, 46, 46)
+
+    label_file_path = '/home/klug/working_data/clinical/clinical_outcome/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx'
+    imaging_dataset_path = '/home/klug/working_data/perfusion_maps/no_GT/train_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz'
+
+    main_log_dir = '/home/klug/output/keras_scope'
+    channels = [0, 1, 2, 3]
+    outcome = "combined_mRS_0-2_90_days"
     desired_shape = (46, 46, 46)
+    # desired_shape = (79, 95, 70)
+
+
     split_ratio = 0.3
     batch_size = 2
-    epochs = 20
+    epochs = 200
     initial_learning_rate = 0.0001
 
-    outcomes_df = pd.read_csv(label_file_path, index_col=0)
-    labels = np.array(outcomes_df).squeeze()
+    # train_dataset, validation_dataset = get_LeftRightDataset(label_file_path, imaging_dataset_path, desired_shape, split_ratio, batch_size)
+    train_dataset, validation_dataset = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
+                                                                outcome, channels,
+                                                                desired_shape, split_ratio, batch_size)
 
-    images = np.load(data_file_path)
-
-    images = np.array([image_preprocessing(image,  min=0, max=1, desired_shape=desired_shape) for image in images])
-
-    x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=split_ratio, random_state=42,
-                                                      shuffle=True, stratify=labels)
-
-    # Define data loaders.
-    train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    validation_loader = tf.data.Dataset.from_tensor_slices((x_val, y_val))
-
-    # Augment the on the fly during training.
-    train_dataset = (
-        train_loader.shuffle(len(x_train))
-            .map(train_augmentation)
-            .batch(batch_size)
-            .prefetch(2)
-    )
-    # Only rescale.
-    validation_dataset = (
-        validation_loader.shuffle(len(x_val))
-            .map(validation_augmentation)
-            .batch(batch_size)
-            .prefetch(2)
-    )
 
     # Build model.
-    model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2])
+    model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2], channels=len(channels))
     model.summary()
 
     # Compile model.
@@ -89,11 +47,11 @@ def main():
     )
 
     # Define callbacks.
+    logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
-        "3d_image_classification.h5", save_best_only=True
+        os.path.join(logdir, "3d_image_classification.h5"), save_best_only=True
     )
     early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_acc", patience=15)
-    logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
     tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
     # Train the model, doing validation at the end of each epoch

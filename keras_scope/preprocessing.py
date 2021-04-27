@@ -10,10 +10,10 @@ def min_max_normalize(volume, min=-1000, max=400):
     return volume
 
 
-def resize_volume(img, desired_width, desired_height, desired_depth):
+def resize_volume(img, desired_width, desired_height, desired_depth, with_channels=True):
     """Resize"""
     # Get current depth
-    current_depth = img.shape[-1]
+    current_depth = img.shape[2]
     current_width = img.shape[0]
     current_height = img.shape[1]
     # Compute depth factor
@@ -25,5 +25,9 @@ def resize_volume(img, desired_width, desired_height, desired_depth):
     height_factor = 1 / height
 
     # Resize
-    img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
+    if with_channels:
+        img = ndimage.zoom(img, (width_factor, height_factor, depth_factor, 1), order=1)
+    else:
+        img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
+
     return img
