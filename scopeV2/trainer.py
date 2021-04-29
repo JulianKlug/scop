@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import scopeV2.datasets as datasets
 from scopeV2.models.luna_model import LunaModel
-from scopeV2.utils.utils import enumerateWithEstimate
+from scopeV2.utils.utils import enumerateWithEstimate, write_json
 from scopeV2.utils.log_config import logging
 
 log = logging.getLogger(__name__)
@@ -30,107 +30,37 @@ METRICS_SIZE = 4
 
 
 class Trainer:
-    def __init__(self, sys_argv=None):
-        if sys_argv is None:
-            sys_argv = sys.argv[1:]
+    def __init__(self, config: dict):
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--num-workers',
-                            help='Number of worker processes for background data loading',
-                            default=8,
-                            type=int,
-                            )
-        parser.add_argument('--batch-size',
-                            help='Batch size to use for training',
-                            default=32,
-                            type=int,
-                            )
-        parser.add_argument('--epochs',
-                            help='Number of epochs to train for',
-                            default=1,
-                            type=int,
-                            )
-        parser.add_argument('--dataset',
-                            help="What to dataset to feed the model.",
-                            action='store',
-                            default='LeftRightDataset',
-                            )
-        parser.add_argument('--tb-prefix',
-                            default='test',
-                            help="Data prefix to use for Tensorboard run. Defaults to test",
-                            )
-        parser.add_argument('--balanced',
-                            help="Balance the training data to half positive, half negative.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augmented',
-                            help="Augment the training data.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augment-flip',
-                            help="Augment the training data by randomly flipping the data left-right, up-down, and front-back.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augment-offset',
-                            help="Augment the training data by randomly offsetting the data slightly along the X and Y axes.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augment-scale',
-                            help="Augment the training data by randomly increasing or decreasing the size of the candidate.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augment-rotate',
-                            help="Augment the training data by randomly rotating the data around the head-foot axis.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('--augment-noise',
-                            help="Augment the training data by randomly adding noise to the data.",
-                            action='store_true',
-                            default=False,
-                            )
-        parser.add_argument('comment',
-                            help="Comment suffix for Tensorboard run.",
-                            nargs='?',
-                            default='',
-                            )
+        self.config = config
 
-        self.data_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy'
-        self.label_file_path = '/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv'
-        self.validation_size = 0.3
-
-        self.monitoring_metric = 'auc'
-
-        self.cli_args = parser.parse_args(sys_argv)
         self.time_str = datetime.datetime.now().strftime('%Y_%m_%d_%H.%M.%S')
 
         self.trn_writer = None
         self.val_writer = None
         self.totalTrainingSamples_count = 0
-        self.validation_cadence = 5
 
         self.augmentation_dict = {}
-        if self.cli_args.augmented or self.cli_args.augment_flip:
+        if self.config.augmented or self.config.augment_flip:
             self.augmentation_dict['flip'] = True
-        if self.cli_args.augmented or self.cli_args.augment_offset:
+        if self.config.augmented or self.config.augment_offset:
             self.augmentation_dict['offset'] = 0.1
-        if self.cli_args.augmented or self.cli_args.augment_scale:
+        if self.config.augmented or self.config.augment_scale:
             self.augmentation_dict['scale'] = 0.2
-        if self.cli_args.augmented or self.cli_args.augment_rotate:
+        if self.config.augmented or self.config.augment_rotate:
             self.augmentation_dict['rotate'] = True
-        if self.cli_args.augmented or self.cli_args.augment_noise:
+        if self.config.augmented or self.config.augment_noise:
             self.augmentation_dict['noise'] = 25.0
 
-        self.dataset_class = getattr(datasets, self.cli_args.dataset)
+        self.validation_cadence = 5
+        self.validation_size = self.config.validation_size
+
+        self.dataset_class = getattr(datasets, self.config.dataset)
+        self.monitoring_metric = self.config.monitoring_metric
 
         self.use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if self.use_cuda else "cpu")
-        self.batch_size = self.cli_args.batch_size
+        self.batch_size = self.config.batch_size
         if self.use_cuda:
             self.batch_size *= torch.cuda.device_count()
 
@@ -152,18 +82,18 @@ class Trainer:
 
     def initTrainDl(self):
         train_ds = self.dataset_class(
-            self.data_file_path,
-            self.label_file_path,
+            self.config.data_path,
+            self.config.label_path,
             validation_size=self.validation_size,
             is_validation=False,
-            neg_to_pos_ratio=int(self.cli_args.balanced),
+            neg_to_pos_ratio=int(self.config.balanced),
             augmentation_dict=self.augmentation_dict,
         )
 
         train_dl = DataLoader(
             train_ds,
             batch_size=self.batch_size,
-            num_workers=self.cli_args.num_workers,
+            num_workers=self.config.num_workers,
             pin_memory=self.use_cuda,
         )
 
@@ -171,8 +101,8 @@ class Trainer:
 
     def initValDl(self):
         val_ds = self.dataset_class(
-            self.data_file_path,
-            self.label_file_path,
+            self.config.data_path,
+            self.config.label_path,
             validation_size=self.validation_size,
             is_validation=True
         )
@@ -180,26 +110,26 @@ class Trainer:
         val_dl = DataLoader(
             val_ds,
             batch_size=self.batch_size,
-            num_workers=self.cli_args.num_workers,
+            num_workers=self.config.num_workers,
             pin_memory=self.use_cuda,
         )
 
         return val_dl
 
     def main(self):
-        log.info("Starting {}, {}".format(type(self).__name__, self.cli_args))
+        log.info("Starting {}, {}".format(type(self).__name__, self.config))
 
         train_dl = self.initTrainDl()
         val_dl = self.initValDl()
 
         best_score = 0.0
-        for epoch_ndx in range(1, self.cli_args.epochs + 1):
+        for epoch_ndx in range(1, self.config.epochs + 1):
             log.info("Epoch {} of {}, {}/{} batches of size {}*{}".format(
                 epoch_ndx,
-                self.cli_args.epochs,
+                self.config.epochs,
                 len(train_dl),
                 len(val_dl),
-                self.cli_args.batch_size,
+                self.config.batch_size,
                 (torch.cuda.device_count() if self.use_cuda else 1),
             ))
 
@@ -214,9 +144,14 @@ class Trainer:
 
                 self.saveModel('classifier', epoch_ndx, score == best_score)
 
+            if epoch_ndx == 1:
+                self.saveConfig()
+
         if hasattr(self, 'trn_writer'):
             self.trn_writer.close()
             self.val_writer.close()
+
+        return best_score
 
     def doTraining(self, epoch_ndx, train_dl):
         self.model.train()
@@ -299,19 +234,18 @@ class Trainer:
 
     def initTensorboardWriters(self):
         if self.trn_writer is None:
-            log_dir = os.path.join('runs', self.cli_args.tb_prefix, self.time_str)
+            log_dir = os.path.join(self.config.output_path, 'runs', self.config.experiment_name, self.time_str)
 
             self.trn_writer = SummaryWriter(
-                log_dir=log_dir + '-trn_cls-' + self.cli_args.comment)
+                log_dir=log_dir + '-trn_cls-' + self.config.comment)
             self.val_writer = SummaryWriter(
-                log_dir=log_dir + '-val_cls-' + self.cli_args.comment)
+                log_dir=log_dir + '-val_cls-' + self.config.comment)
 
     def logMetrics(
             self,
             epoch_ndx: int,
             mode_str: str,
             metrics_t,
-            classificationThreshold=0.5,
     ):
         self.initTensorboardWriters()
         log.info("E{} {}".format(
@@ -434,14 +368,13 @@ class Trainer:
 
     def saveModel(self, type_str, epoch_ndx, isBest=False):
         file_path = os.path.join(
-            'data-unversioned',
-            'test',
+            self.config.output_path,
             'models',
-            self.cli_args.tb_prefix,
+            self.config.experiment_name,
             '{}_{}_{}.{}.state'.format(
                 type_str,
                 self.time_str,
-                self.cli_args.comment,
+                self.config.comment,
                 self.totalTrainingSamples_count,
             )
         )
@@ -468,15 +401,24 @@ class Trainer:
 
         if isBest:
             best_path = os.path.join(
-                'data-unversioned', 'test', 'models',
-                self.cli_args.tb_prefix,
-                f'{type_str}_{self.time_str}_{self.cli_args.comment}.best.state')
+                self.config.output_path, 'models',
+                self.config.experiment_name,
+                f'{type_str}_{self.time_str}_{self.config.comment}.best.state')
             shutil.copyfile(file_path, best_path)
 
             log.info("Saved model params to {}".format(best_path))
 
         with open(file_path, 'rb') as f:
             log.info("SHA1: " + hashlib.sha1(f.read()).hexdigest())
+
+    def saveConfig(self):
+        file_path = os.path.join(
+            self.config.output_path,
+            'models',
+            self.config.experiment_name,
+            f'{self.time_str}_{self.config.comment}_config.json'
+        )
+        write_json(self.config.__dict__, file_path)
 
 
 if __name__ == '__main__':

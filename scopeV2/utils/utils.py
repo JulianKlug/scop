@@ -1,6 +1,8 @@
+import json
 from collections import Iterable
 import time
 import datetime
+from pathlib import Path
 
 from scopeV2.utils.log_config import logging
 
@@ -107,3 +109,9 @@ def enumerateWithEstimate(
         iter_len,
         str(datetime.datetime.now()).rsplit('.', 1)[0],
     ))
+
+
+def write_json(content, fname):
+    fname = Path(fname)
+    with fname.open('wt') as handle:
+        json.dump(content, handle, indent=4, sort_keys=False)
