@@ -1,1 +1,2 @@
 from .leftright_dataset import LeftRightDataset
+from .geneva_stroke_outcome_dataset import GenevaStrokeOutcomeDataset

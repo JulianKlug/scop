@@ -1,5 +1,5 @@
 branches:
-  only:
+w  only:
     - main
     - scopeV2
 language: python

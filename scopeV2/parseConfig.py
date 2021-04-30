@@ -37,11 +37,20 @@ def parseConfig(sys_argv=None):
     parser.add_argument('--dataset',
                         help="What dataset to feed the model.",
                         action='store',
-                        default='LeftRightDataset',
+                        default='GenevaStrokeOutcomeDataset',
                         )
     parser.add_argument('--experiment-name',
                         default='test',
                         help="Data prefix to use for multiple runs. Defaults to test",
+                        )
+    parser.add_argument('--outcome',
+                        default='',
+                        help="Name of outcome variable to use.",
+                        )
+    parser.add_argument('--channels',
+                        nargs='+', type=int,
+                        default=[0, 1, 2, 3],
+                        help="Index of channels to use, defaults to [0,1,2,3]",
                         )
     parser.add_argument('--balanced',
                         help="Balance the training data to half positive, half negative.",
@@ -80,7 +89,7 @@ def parseConfig(sys_argv=None):
                         )
     parser.add_argument('-c', '--config',
                         help="Use config file to overwrite defaults.",
-                        default = None, type = str,
+                        default=None, type=str,
                         )
     parser.add_argument('-d', '--data_path',
                         help="Path to data",

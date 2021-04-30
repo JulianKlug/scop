@@ -44,13 +44,13 @@ class Trainer:
         if self.config.augmented or self.config.augment_flip:
             self.augmentation_dict['flip'] = True
         if self.config.augmented or self.config.augment_offset:
-            self.augmentation_dict['offset'] = 0.1
+            self.augmentation_dict['offset'] = 0.4
         if self.config.augmented or self.config.augment_scale:
             self.augmentation_dict['scale'] = 0.2
         if self.config.augmented or self.config.augment_rotate:
             self.augmentation_dict['rotate'] = True
         if self.config.augmented or self.config.augment_noise:
-            self.augmentation_dict['noise'] = 25.0
+            self.augmentation_dict['noise'] = 0.005
 
         self.validation_cadence = 5
         self.validation_size = self.config.validation_size
@@ -68,7 +68,7 @@ class Trainer:
         self.optimizer = self.initOptimizer()
 
     def initModel(self):
-        model = LunaModel()
+        model = LunaModel(in_channels=len(self.config.channels))
         if self.use_cuda:
             log.info("Using CUDA; {} devices.".format(torch.cuda.device_count()))
         if torch.cuda.device_count() > 1:
@@ -84,6 +84,8 @@ class Trainer:
         train_ds = self.dataset_class(
             self.config.data_path,
             self.config.label_path,
+            outcome=self.config.outcome,
+            channels=self.config.channels,
             validation_size=self.validation_size,
             is_validation=False,
             neg_to_pos_ratio=int(self.config.balanced),
@@ -103,6 +105,8 @@ class Trainer:
         val_ds = self.dataset_class(
             self.config.data_path,
             self.config.label_path,
+            outcome=self.config.outcome,
+            channels=self.config.channels,
             validation_size=self.validation_size,
             is_validation=True
         )
