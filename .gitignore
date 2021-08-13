@@ -1,6 +1,9 @@
 .idea
 .DS_Store
 ./scope/saved
+runs/
+data-unversioned/
+.pytest_cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

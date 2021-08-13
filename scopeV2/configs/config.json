@@ -1,0 +1,6 @@
+{
+    "experiment_name": "config_testing",
+    "data_path": "/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/data.npy",
+    "label_path": "/Users/jk1/stroke_research/SimpleVoxel-3D/leftright/labels.csv",
+    "output_path": "/Users/jk1/temp/scopeV2"
+}
