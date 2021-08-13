@@ -1,0 +1,7 @@
+{
+    "experiment_name": "config_testing",
+    "data_path": "/home/klug/working_data/perfusion_maps/no_GT/train_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
+    "label_path": "/home/klug/working_data/clinical/clinical_outcome/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
+    "outcome": "combined_mRS_0-2_90_days",
+    "output_path": "/home/klug/output/scope/scopeV2"
+}
