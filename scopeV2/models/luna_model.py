@@ -12,7 +12,7 @@ class LunaModel(nn.Module):
     def __init__(self, in_channels=1, conv_channels=8):
         super().__init__()
 
-        self.tail_batchnorm = nn.BatchNorm3d(1)
+        self.tail_batchnorm = nn.BatchNorm3d(in_channels)
 
         self.block1 = LunaBlock(in_channels, conv_channels)
         self.block2 = LunaBlock(conv_channels, conv_channels * 2)

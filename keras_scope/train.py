@@ -2,8 +2,9 @@ from datetime import datetime
 import os
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
-from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from model import get_model
+from keras_scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from keras_scope.metrics import f1_m
+from keras_scope.model import get_model
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
     model.compile(
         loss="binary_crossentropy",
         optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
-        metrics=["acc"],
+        metrics=["acc", 'AUC', f1_m],
     )
 
     # Define callbacks.
@@ -51,8 +52,11 @@ def main():
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
         os.path.join(logdir, "3d_image_classification.h5"), save_best_only=True
     )
-    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_acc", patience=15)
-    tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_acc", patience=50)
+    tensorboard_callback = keras.callbacks.TensorBoard(
+        log_dir=logdir,
+        histogram_freq=5,
+    )
 
     # Train the model, doing validation at the end of each epoch
     model.fit(

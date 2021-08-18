@@ -1,8 +1,8 @@
 import numpy as np
-from augmentation import rotate
-from preprocessing import min_max_normalize, resize_volume
+from keras_scope.augmentation import rotate
+from keras_scope.preprocessing import min_max_normalize, resize_volume
 import pandas as pd
-from datasets.base_dataset import base_dataset
+from keras_scope.datasets.base_dataset import base_dataset
 
 
 def image_preprocessing(min, max, desired_shape):

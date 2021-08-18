@@ -1,6 +1,5 @@
 branches:
-  only:
-    - scopeV2
+   only:
     - main
 language: python
 python:

@@ -1,0 +1,7 @@
+{
+    "experiment_name": "default_testing",
+    "data_path": "/Users/jk1/stroke_datasets/dataset_files/perfusion_data_sets/noGT_datasets/train_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz",
+    "label_path": "/Users/jk1/temp/scope_test/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx",
+    "outcome": "combined_mRS_0-2_90_days",
+    "output_path": "/Users/jk1/temp/scopeV2"
+}

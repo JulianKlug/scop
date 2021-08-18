@@ -1,6 +1,6 @@
-import numpy as np
-
+import tensorflow as tf
 from keras_scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from keras_scope.metrics import f1_m
 from keras_scope.model import get_model
 
 
@@ -21,14 +21,16 @@ def test():
 
     model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2], channels=len(channels))
 
+
     model.compile(
-        metrics=["acc", "AUC"],
+        metrics=["acc", "AUC", f1_m, tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
     )
 
     model.load_weights(model_path)
     result = model.evaluate(test_dataset)
 
     print(dict(zip(model.metrics_names, result)))
+
 
 if __name__ == '__main__':
     test()
