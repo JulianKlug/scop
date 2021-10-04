@@ -11,11 +11,11 @@ from keras_scope.utils import ensure_dir, save_dataset
 from keras_scope.train import train
 
 def cross_validate():
-    n_repeats = 1
+    n_repeats = 2
     n_folds = 5
 
-    label_file_path = '/mnt/data/hendrik/jk/scope_data/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx'
-    imaging_dataset_path = '/mnt/data/hendrik/jk/scope_data/noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz'
+    label_file_path = '/mnt/data/hendrik/jk/scope_data/no_clinical_data/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx'
+    imaging_dataset_path = '/mnt/data/hendrik/jk/scope_data/no_clinical_data/noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz'
     output_dir = '/home/hendrik/jk/output/keras_scope/cross_validation'
 
     # imaging_dataset_path = "/Users/jk1/stroke_datasets/dataset_files/perfusion_data_sets/noGT_datasets/train_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz"
@@ -43,6 +43,7 @@ def cross_validate():
     all_indices = list(range(len(ids)))
 
     result_df = pd.DataFrame()
+    test_prediction_df = pd.DataFrame()
 
     # Start iteration of repeated k-fold cross-validation
     iteration = 0
@@ -70,12 +71,21 @@ def cross_validate():
                                     initial_learning_rate, epochs)
 
             # test
-            fold_result_dict = test(model_path, label_file_path, temp_test_data_path, outcome, channels, desired_shape)
+            fold_result_dict, subject_prediction_label = test(model_path, label_file_path, temp_test_data_path, outcome, channels, desired_shape,
+                                    single_subject_predictions=True)
 
             # store results
             fold_result_dict.update({'iteration': iteration, 'fold': fold, 'kfold_split_seed': j})
+            subject_prediction_label = np.vstack([subject_prediction_label, np.repeat(iteration, subject_prediction_label.shape[1]), np.repeat(j, subject_prediction_label.shape[1])])
             fold_result_df = pd.DataFrame(fold_result_dict, index=[0])
             result_df = result_df.append(fold_result_df)
+
+            fold_test_prediction_df = pd.DataFrame(subject_prediction_label.T,
+                                                   columns=['id', 'test_prediction', 'test_label',
+                                                            'cross_validation_iteration', 'cross_validation_kfold_split_seed'])
+            test_prediction_df = test_prediction_df.append(fold_test_prediction_df, ignore_index=True)
+            result_df.to_csv(os.path.join(output_dir, 'cv_test_results.csv'))
+            test_prediction_df.to_csv(os.path.join(output_dir, 'cv_test_predictions.csv'))
 
             # todo add all parameters to train and test
 
@@ -85,7 +95,6 @@ def cross_validate():
 
     print('Median test AUC', result_df['auc'].median())
     print('Median test accuracy', result_df['acc'].median())
-    result_df.to_csv(os.path.join(output_dir, 'cv_test_results.csv'))
 
 
 if __name__ == '__main__':

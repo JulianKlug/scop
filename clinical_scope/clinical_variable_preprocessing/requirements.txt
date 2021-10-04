@@ -1,0 +1,1 @@
+git+git://github.com/MonsieurWave/Geneva-Stroke-Preprocessing#egg=gsprep
