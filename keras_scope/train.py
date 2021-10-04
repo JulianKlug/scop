@@ -27,7 +27,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
             pass
 
     # train_dataset, validation_dataset = get_LeftRightDataset(label_file_path, imaging_dataset_path, desired_shape, split_ratio, batch_size)
-    train_dataset, validation_dataset = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
+    train_dataset, validation_dataset, id_allocation = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
                                                                 outcome, channels,
                                                                 desired_shape, split_ratio, batch_size)
 

@@ -2,23 +2,31 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
 
+
 def base_dataset(images, labels, test_ratio, batch_size,
-                 image_preprocessing, train_augmentation, validation_augmentation):
+                 image_preprocessing, train_augmentation, validation_augmentation,
+                 ids=None):
     images = np.array([image_preprocessing(image) for image in images])
 
     if test_ratio == 1:
         # all data goes into testing/validation
         data_loader = tf.data.Dataset.from_tensor_slices((images, labels))
         dataset = (
-            data_loader.shuffle(len(images))
+            data_loader
                 .map(validation_augmentation)
                 .batch(batch_size)
                 .prefetch(2)
         )
-        return None, dataset
+        return None, dataset, (None, ids)
 
-    x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=test_ratio, random_state=42,
-                                                      shuffle=True, stratify=labels)
+    if ids is not None:
+        ids_train, ids_val, x_train, x_val, y_train, y_val = train_test_split(
+            ids, images, labels, test_size=test_ratio, random_state=42,
+            shuffle=True, stratify=labels)
+    else:
+        x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=test_ratio, random_state=42,
+                                                          shuffle=True, stratify=labels)
+        ids_train, ids_val = None, None
 
     # Define data loaders.
     train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
@@ -26,17 +34,17 @@ def base_dataset(images, labels, test_ratio, batch_size,
 
     # Augment the on the fly during training.
     train_dataset = (
-        train_loader.shuffle(len(x_train))
+        train_loader
             .map(train_augmentation)
             .batch(batch_size)
             .prefetch(2)
     )
     # Only rescale.
     validation_dataset = (
-        validation_loader.shuffle(len(x_val))
+        validation_loader
             .map(validation_augmentation)
             .batch(batch_size)
             .prefetch(2)
     )
 
-    return train_dataset, validation_dataset
+    return train_dataset, validation_dataset, (ids_train, ids_val)

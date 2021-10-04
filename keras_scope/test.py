@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from keras_scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from keras_scope.metrics import f1_m
@@ -7,11 +8,12 @@ precision = tf.keras.metrics.Precision()
 recall = tf.keras.metrics.Recall()
 
 
-def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape):
+def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape,
+         single_subject_predictions = False):
     test_ratio = 1
     batch_size = 200
 
-    _, test_dataset = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
+    _, test_dataset, id_allocation = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
                                               outcome, channels,
                                               desired_shape, test_ratio, batch_size)
 
@@ -23,8 +25,14 @@ def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, d
 
     model.load_weights(model_path)
     result = model.evaluate(test_dataset)
-
     print(dict(zip(model.metrics_names, result)))
+
+    if single_subject_predictions:
+        _, test_ids = id_allocation
+        test_subject_predictions = model.predict(test_dataset).ravel()
+        test_labels = [a for temp in list(zip(*test_dataset))[1] for a in temp.numpy()]
+        subject_prediction_label = np.stack([test_ids, test_subject_predictions, test_labels])
+        return dict(zip(model.metrics_names, result)), subject_prediction_label
     return dict(zip(model.metrics_names, result))
 
 
