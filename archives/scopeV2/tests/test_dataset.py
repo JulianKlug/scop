@@ -1,5 +1,5 @@
 import os
-from scopeV2.datasets import LeftRightDataset
+from archives.scopeV2.datasets import LeftRightDataset
 import pytest
 
 

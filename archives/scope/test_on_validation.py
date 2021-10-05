@@ -6,9 +6,9 @@ import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
-from parse_config import ConfigParser
-from utils import ensure_dir, write_json
-from utils.plot_ROC import plot_roc
+from archives.scope.parse_config import ConfigParser
+from archives.scope.utils import ensure_dir, write_json
+from archives.scope.utils.plot_ROC import plot_roc
 
 
 def main(config, output_dir=None):
@@ -21,18 +21,19 @@ def main(config, output_dir=None):
 
     # setup data_loader instances
     data_loader = getattr(module_data, config['data_loader']['type'])(
-        config.config['test_data_path'],
-        outcome_file_path=config.config['test_outcome_data'],
+        config.config['data_path'],
+        outcome_file_path=config.config['outcome_data'],
         outcome=config['data_loader']['args']['outcome'],
         channels=config['data_loader']['args']['channels'],
         preload_data=True,
         augmentation=False,
         batch_size=512,
+        validation_split=config['data_loader']['args']['validation_split'],
         shuffle=False,
-        validation_split=0.0,
-        training=False,
         num_workers=2
     )
+    valid_data_loader = data_loader.split_validation()
+
 
     # build model architecture
     model = config.init_obj('arch', module_arch)
@@ -52,7 +53,7 @@ def main(config, output_dir=None):
 
     # prepare model for testing
     model = model.to(device)
-    model = model.double()
+    # model = model.double()
     model.eval()
 
     total_loss = 0.0
@@ -61,7 +62,7 @@ def main(config, output_dir=None):
     prediction_df = pd.DataFrame()
 
     with torch.no_grad():
-        for i, (data, target, subj_id) in enumerate(tqdm(data_loader)):
+        for i, (data, target, subj_id) in enumerate(tqdm(valid_data_loader)):
             data, target = data.to(device), target.to(device)
             output = model(data)
 
@@ -110,9 +111,9 @@ if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
     args.add_argument('-c', '--config', default=None, type=str,
                       help='config file path (default: None)')
-    args.add_argument('-t', '--test-data', default=None, type=str,
+    args.add_argument('-p', '--data', default=None, type=str,
                       help='test data file path (default: None)')
-    args.add_argument('-gt', '--test-outcome-data', default=None, type=str,
+    args.add_argument('-gt', '--outcome-data', default=None, type=str,
                       help='file path for ground truth outcomes for test data (default: None)')
     args.add_argument('-o', '--output', default=None, type=str,
                       help='path to output dir (default: None)')
@@ -123,6 +124,6 @@ if __name__ == '__main__':
 
     config = ConfigParser.from_args(args, save_config=True)
     args = args.parse_args()
-    config.config['test_data_path'] = args.test_data
-    config.config['test_outcome_data'] = args.test_outcome_data
+    config.config['data_path'] = args.data
+    config.config['outcome_data'] = args.outcome_data
     main(config, args.output)

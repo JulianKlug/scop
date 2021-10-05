@@ -3,16 +3,14 @@ import os
 import tensorflow as tf
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
-from keras_scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from keras_scope.metrics import f1_m
-from keras_scope.model import get_model
+from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from metrics import f1_m
+from model import get_model
 
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, desired_shape,
-          initial_learning_rate, epochs=200, force_cpu=False):
-
-    split_ratio = 0.3
-    batch_size = 2
+          initial_learning_rate, epochs=200, split_ratio=0.3, batch_size=2,
+          monitoring_metric='auc', force_cpu=False):
 
     if force_cpu:
         print("Disabling GPUs.")
@@ -51,9 +49,9 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     model_path = os.path.join(logdir, "3d_image_classification.h5")
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
         model_path, save_best_only=True,
-        monitor='val_auc', mode='max'
+        monitor='val_' + monitoring_metric, mode='max'
     )
-    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_auc", patience=100, mode='max')
+    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+monitoring_metric, patience=100, mode='max')
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=logdir,
         histogram_freq=5,

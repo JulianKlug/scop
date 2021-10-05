@@ -1,8 +1,8 @@
 import numpy as np
 import tensorflow as tf
-from keras_scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from keras_scope.metrics import f1_m
-from keras_scope.model import get_model
+from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from metrics import f1_m
+from model import get_model
 
 precision = tf.keras.metrics.Precision()
 recall = tf.keras.metrics.Recall()

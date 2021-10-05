@@ -1,7 +1,7 @@
 import math
 
 from torch import nn as nn
-from scopeV2.utils.log_config import logging
+from archives.scopeV2.utils.log_config import logging
 
 
 log = logging.getLogger(__name__)

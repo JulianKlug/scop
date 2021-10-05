@@ -3,19 +3,18 @@ import shutil
 import sys
 import torch
 import os
-import argparse
 import datetime
 import torch.nn as nn
 from matplotlib import pyplot
-from torch.optim import SGD, Adam
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
-import scopeV2.datasets as datasets
-from scopeV2.models.luna_model import LunaModel
-from scopeV2.utils.utils import enumerateWithEstimate, write_json
-from scopeV2.utils.log_config import logging
+import archives.scopeV2.datasets as datasets
+from archives.scopeV2.models.luna_model import LunaModel
+from archives.scopeV2.utils.utils import enumerateWithEstimate, write_json
+from archives.scopeV2.utils.log_config import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import numpy as np
 
 def ensure_dir(dirname):

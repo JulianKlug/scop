@@ -1,5 +1,5 @@
-from scopeV2.parseConfig import parseConfig
-from scopeV2.trainer import Trainer
+from archives.scopeV2.parseConfig import parseConfig
+from archives.scopeV2.trainer import Trainer
 
 
 def train(sys_argv=None):
