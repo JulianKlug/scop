@@ -1,6 +1,13 @@
 # scope
 Stroke Clinical Outcome Prediction Experiment
 
+
+## GPU setup issues
+
+- `Could not load dynamic library 'libcudnn.so.8'`
+  - Solution: `conda install -c conda-forge cudnn`
+
+
 ## References & Further reading
 
 - Predicting Outcome of Endovascular Treatment for Acute Ischemic Stroke: Potential Value of Machine Learning Algorithms (https://doi.org/10.3389/fneur.2018.00784)

@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=train_scope    # Job name
 #SBATCH --partition=debug-gpu
-#SBATCH --gres=gpu:titan:1                    # Number of GPUs
+#SBATCH --gres=gpu:rtx:8                    # Number of GPUs
 #SBATCH --ntasks=1
 #SBATCH --mem=30G                     # Job memory request
 #SBATCH --time=02:00:00               # Time limit hrs:min:sec
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=16
 #SBATCH --output=/home/users/k/klug/logs/scope/train_scope_%j.log   # Standard output and error log
 
 
