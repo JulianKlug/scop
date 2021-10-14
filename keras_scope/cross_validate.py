@@ -28,7 +28,7 @@ def cross_validate(config: dict):
     initial_learning_rate = config.initial_learning_rate
 
     ensure_dir(output_dir)
-    output_dir = os.path.join(output_dir, 'cv_' + config.experiment_id)
+    output_dir = os.path.join(output_dir, 'cv_' + config.experiment_id + config.comment)
     ensure_dir(output_dir)
     dict2json(os.path.join(output_dir, 'config.json'), vars(config))
 
