@@ -10,7 +10,7 @@ from model import get_model
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, desired_shape,
           initial_learning_rate, epochs=200, split_ratio=0.3, batch_size=2,
-          monitoring_metric='auc', force_cpu=False):
+          monitoring_metric='auc', early_stopping_patience=100, force_cpu=False):
 
     if force_cpu:
         print("Disabling GPUs.")
@@ -51,7 +51,8 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         model_path, save_best_only=True,
         monitor='val_' + monitoring_metric, mode='max'
     )
-    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+monitoring_metric, patience=100, mode='max')
+    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+monitoring_metric,
+                                                      patience=early_stopping_patience, mode='max')
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=logdir,
         histogram_freq=5,

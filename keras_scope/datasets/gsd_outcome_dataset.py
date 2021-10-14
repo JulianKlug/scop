@@ -21,6 +21,10 @@ def train_augmentation(volume, label):
     # volume = tf.expand_dims(volume, axis=3)
     return volume, label
 
+def no_augmentation(volume, label):
+    """Do not apply any augmentation"""
+    # volume = tf.expand_dims(volume, axis=3)
+    return volume, label
 
 def validation_augmentation(volume, label):
     """Process validation data by only adding a channel."""
@@ -29,7 +33,7 @@ def validation_augmentation(volume, label):
 
 
 def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, channels, desired_shape, test_ratio,
-                            batch_size):
+                            batch_size, use_augmentation=True):
     params = np.load(imaging_dataset_path, allow_pickle=True)['params']
     try:
         print('Using channels:', [params.item()['ct_sequences'][channel] for channel in channels])
@@ -52,10 +56,15 @@ def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, chan
     raw_masks = np.expand_dims(raw_masks, axis=-1)
     images = raw_images * raw_masks
 
+    if use_augmentation:
+        applied_train_augmentation = train_augmentation
+    else:
+        applied_train_augmentation = no_augmentation
+
     train_dataset, validation_dataset, id_allocation = base_dataset(images, labels, test_ratio, batch_size,
                                                                      image_preprocessing(min=0, max=400,
                                                                                          desired_shape=desired_shape),
-                                                                     train_augmentation, validation_augmentation,
+                                                                     applied_train_augmentation, validation_augmentation,
                                                                      ids=ids)
 
     return train_dataset, validation_dataset, id_allocation

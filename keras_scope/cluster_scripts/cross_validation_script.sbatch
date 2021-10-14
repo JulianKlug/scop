@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --mem=30G                     # Job memory request
 #SBATCH --cpus-per-task=16
-#SBATCH --time=47:59:00               # Time limit hrs:min:sec
+#SBATCH --time=20:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/home/users/k/klug/logs/scope/cv_keras_scope_%j.log   # Standard output and error log
 
 

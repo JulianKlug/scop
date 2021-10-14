@@ -31,6 +31,11 @@ def parse_config(sys_argv=None):
                         default='auc',
                         type=str
                         )
+    parser.add_argument('--early_stopping_patience',
+                        help="Patience for early stopping",
+                        default=100,
+                        type=int
+                        )
 
     # IMAGE PARAMETERS
     parser.add_argument('--channels',

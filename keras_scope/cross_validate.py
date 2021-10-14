@@ -71,7 +71,8 @@ def cross_validate(config: dict):
             # train
             _, model_path = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
                                   initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
-                                  split_ratio=config.validation_size, batch_size=config.batch_size)
+                                  split_ratio=config.validation_size, batch_size=config.batch_size,
+                                  early_stopping_patience=config.early_stopping_patience)
 
             # test
             fold_result_dict, subject_prediction_label = test(model_path, label_file_path, temp_test_data_path, outcome,
