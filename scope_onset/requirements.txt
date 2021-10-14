@@ -1,0 +1,7 @@
+matplotlib
+tensorflow==2.5
+keras==2.4
+numpy
+sklearn
+pandas
+git+git://github.com/kim-younghan/RandAugment3D#egg=RandAugment3D
