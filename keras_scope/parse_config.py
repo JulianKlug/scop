@@ -36,6 +36,11 @@ def parse_config(sys_argv=None):
                         default=100,
                         type=int
                         )
+    parser.add_argument('--use-augmentation',
+                        help="Use data augmentation on training",
+                        default=1,
+                        type=int
+                        )
 
     # IMAGE PARAMETERS
     parser.add_argument('--channels',

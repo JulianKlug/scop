@@ -4,10 +4,10 @@ import tempfile
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 
 from keras_scope.test import test
-from keras_scope.utils import ensure_dir, save_dataset
+from utils.utils import ensure_dir, save_dataset
 from keras_scope.train import train
 
 def cross_validate_with_ground_truth_lesion():

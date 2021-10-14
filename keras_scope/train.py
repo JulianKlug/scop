@@ -10,7 +10,8 @@ from model import get_model
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, desired_shape,
           initial_learning_rate, epochs=200, split_ratio=0.3, batch_size=2,
-          monitoring_metric='auc', early_stopping_patience=100, force_cpu=False):
+          monitoring_metric='auc', id_variable='pid', early_stopping_patience=100, force_cpu=False,
+          use_augmentation=True):
 
     if force_cpu:
         print("Disabling GPUs.")
@@ -27,7 +28,9 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     # train_dataset, validation_dataset = get_LeftRightDataset(label_file_path, imaging_dataset_path, desired_shape, split_ratio, batch_size)
     train_dataset, validation_dataset, id_allocation = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
                                                                 outcome, channels,
-                                                                desired_shape, split_ratio, batch_size)
+                                                                desired_shape, split_ratio, batch_size,
+                                                                               use_augmentation=use_augmentation,
+                                                                               id_variable=id_variable)
 
 
     # Build model.

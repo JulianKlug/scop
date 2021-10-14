@@ -9,13 +9,13 @@ recall = tf.keras.metrics.Recall()
 
 
 def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape,
-         single_subject_predictions = False):
+         single_subject_predictions = False, id_variable='pid'):
     test_ratio = 1
     batch_size = 200
 
     _, test_dataset, id_allocation = get_gsd_outcome_dataset(label_file_path, imaging_dataset_path,
                                               outcome, channels,
-                                              desired_shape, test_ratio, batch_size)
+                                              desired_shape, test_ratio, batch_size, id_variable=id_variable)
 
     model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2], channels=len(channels))
 

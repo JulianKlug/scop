@@ -1,9 +1,11 @@
 import numpy as np
-from augmentation import rotate
+import tensorflow as tf
 from preprocessing import min_max_normalize, resize_volume
 import pandas as pd
 from datasets.base_dataset import base_dataset
+from utils.augmentations import RandAugment3D
 
+augment = RandAugment3D(n=2)
 
 def image_preprocessing(min, max, desired_shape):
     def process(volume):
@@ -14,11 +16,10 @@ def image_preprocessing(min, max, desired_shape):
 
     return process
 
-
 def train_augmentation(volume, label):
     """Process training data by rotating and adding a channel."""
-    volume = rotate(volume)
-    # volume = tf.expand_dims(volume, axis=3)
+    volume = tf.numpy_function(augment, [volume], tf.float32)
+    volume = tf.convert_to_tensor(volume)
     return volume, label
 
 def no_augmentation(volume, label):
@@ -33,7 +34,7 @@ def validation_augmentation(volume, label):
 
 
 def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, channels, desired_shape, test_ratio,
-                            batch_size, use_augmentation=True):
+                            batch_size, id_variable, continuous_outcome=False, use_augmentation=True):
     params = np.load(imaging_dataset_path, allow_pickle=True)['params']
     try:
         print('Using channels:', [params.item()['ct_sequences'][channel] for channel in channels])
@@ -43,7 +44,7 @@ def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, chan
     ids = np.load(imaging_dataset_path, allow_pickle=True)['ids']
 
     outcomes_df = pd.read_excel(label_file_path)
-    labels = np.array([outcomes_df.loc[outcomes_df['anonymised_id'] == subj_id, outcome].iloc[0] for
+    labels = np.array([outcomes_df.loc[outcomes_df[id_variable] == subj_id, outcome].iloc[0] for
                        subj_id in ids])
 
     raw_images = np.load(imaging_dataset_path, allow_pickle=True)['ct_inputs'][..., channels]
@@ -62,9 +63,9 @@ def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, chan
         applied_train_augmentation = no_augmentation
 
     train_dataset, validation_dataset, id_allocation = base_dataset(images, labels, test_ratio, batch_size,
-                                                                     image_preprocessing(min=0, max=400,
-                                                                                         desired_shape=desired_shape),
-                                                                     applied_train_augmentation, validation_augmentation,
-                                                                     ids=ids)
+                                                                                  image_preprocessing(min=0, max=400,
+                                                                     desired_shape=desired_shape),
+                                                                                  applied_train_augmentation, validation_augmentation,
+                                                                                  ids=ids)
 
     return train_dataset, validation_dataset, id_allocation
