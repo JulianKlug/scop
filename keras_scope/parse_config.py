@@ -55,6 +55,11 @@ def parse_config(sys_argv=None):
                         default=None, type=str,
                         )
 
+    parser.add_argument('--id_variable',
+                        help="ID parameter in database",
+                        default=None, type=str,
+                        )
+
     # MODEL PARAMETERS
     parser.add_argument('-mis', '--model_input_shape',
                         help="Desired input shape for model",
