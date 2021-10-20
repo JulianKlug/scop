@@ -22,7 +22,7 @@ from scope_onset.models.basic_model import get_regression_model, get_classificat
 
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_input_shape,
-          initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, split_ratio=0.3, batch_size=2,
+          initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, early_stopping_patience=100, split_ratio=0.3, batch_size=2,
           target_metric='max auc', use_augmentation=True, force_cpu=False, weight_decay_coefficient=1e-4,
           logdir=None):
 
@@ -91,7 +91,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         model_path, save_best_only=True,
         monitor='val_' + target_metric[1], mode=target_metric[0]
     )
-    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+target_metric[1], patience=100, mode=target_metric[0])
+    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+target_metric[1], patience=early_stopping_patience, mode=target_metric[0])
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=logdir,
         histogram_freq=5,
@@ -125,6 +125,7 @@ if __name__ == '__main__':
           config.initial_learning_rate, config.id_variable,
           continuous_outcome=config.continuous_outcome,
           epochs=config.epochs,
+          early_stopping_patience=config.early_stopping_patience,
           split_ratio=config.validation_size,
           batch_size=config.batch_size,
           target_metric=config.target_metric,
