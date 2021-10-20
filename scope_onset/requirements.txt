@@ -5,4 +5,4 @@ numpy
 sklearn
 pandas
 monai
-git+git://github.com/kim-younghan/RandAugment3D#egg=RandAugment3D
+skimage
