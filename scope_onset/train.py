@@ -91,7 +91,11 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         model_path, save_best_only=True,
         monitor='val_' + target_metric[1], mode=target_metric[0]
     )
-    early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_"+target_metric[1], patience=early_stopping_patience, mode=target_metric[0])
+    early_stopping_cb = keras.callbacks.EarlyStopping(
+        monitor="val_"+target_metric[1],
+        min_delta=1,
+        patience=early_stopping_patience,
+        mode=target_metric[0])
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=logdir,
         histogram_freq=5,
