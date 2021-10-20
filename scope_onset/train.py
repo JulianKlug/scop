@@ -68,15 +68,16 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     model.summary()
 
     # Learning rate decay
-    # lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-    #     initial_learning_rate, decay_steps=100000, decay_rate=0.96, staircase=True
-    # )
+    lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate, decay_steps=config.lr_decay_steps, decay_rate=0.96,
+        staircase=True
+    )
     # Compile model.
     model.compile(
         loss=loss,
-        # optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
-        # optimizer=keras.optimizers.Adam(learning_rate=3e-4),
-        optimizer='adam',
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+        # optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
+        # optimizer='adam',
         metrics=metrics,
     )
 
@@ -111,7 +112,10 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
 
 if __name__ == '__main__':
     config = parse_config()
-    logdir = os.path.join(config.output_dir, datetime.now().strftime("%Y%m%d_%H%M%S"))
+    comment = config.comment
+    logdir = os.path.join(config.output_dir,
+                          datetime.now().strftime("%Y%m%d_%H%M%S")
+                          + comment)
     ensure_dir(logdir)
     dict2json(os.path.join(logdir, 'config.json'), vars(config))
 
@@ -125,4 +129,5 @@ if __name__ == '__main__':
           batch_size=config.batch_size,
           target_metric=config.target_metric,
           use_augmentation=config.use_augmentation,
+          weight_decay_coefficient=config.weight_decay_coefficient,
           logdir=logdir)

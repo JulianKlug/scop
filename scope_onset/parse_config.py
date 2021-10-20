@@ -103,6 +103,9 @@ def parse_config(sys_argv=None):
     parser.add_argument('--norby', type=bool, default=False,
                         help="If true use norby package to send training updates via telegram.")
 
+    parser.add_argument('--comment', type=str, default='',
+                        help="Add comment to experiment_id")
+
     cli_args = parser.parse_args(sys_argv)
 
     # update flags with config dict
