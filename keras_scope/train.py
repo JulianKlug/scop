@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import tensorflow as tf
+import numpy as np
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
@@ -71,9 +72,15 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_callback],
     )
 
-    best_val_score = max(history.history["val_" + monitoring_metric])
+    best_val_score_index = np.argmax(history.history["val_" + monitoring_metric])
+    plateau_radius = 5
+    try:
+        best_val_score_plateau = np.mean(history.history["val_" + monitoring_metric]
+                                         [best_val_score_index-plateau_radius:best_val_score_index+plateau_radius])
+    except:
+        best_val_score_plateau = history.history["val_" + monitoring_metric][best_val_score_index]
 
-    return model, model_path, best_val_score
+    return model, model_path, best_val_score_plateau
 
 
 if __name__ == '__main__':

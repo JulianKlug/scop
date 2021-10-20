@@ -70,14 +70,14 @@ def cross_validate(config: dict):
 
             for train_round_i in range(config.max_train_rounds):
                 # train
-                _, model_path, best_val_score = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
+                _, model_path, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
                                       initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
                                       id_variable=config.id_variable,
                                       split_ratio=config.validation_size, batch_size=config.batch_size,
                                       early_stopping_patience=config.early_stopping_patience,
                                       use_augmentation=config.use_augmentation)
 
-                if best_val_score > config.min_val_score:
+                if best_val_score_plateau > config.min_val_score:
                     break
 
             # test
