@@ -13,5 +13,7 @@
     "use_augmentation": 1,
     "cv_n_repeats": 1,
     "cv_n_folds": 2,
+    "max_train_rounds": 1,
+    "min_val_score": 0.7,
     "norby": 0
 }

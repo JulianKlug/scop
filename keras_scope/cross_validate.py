@@ -68,13 +68,17 @@ def cross_validate(config: dict):
             save_dataset(raw_images[test_indices], raw_masks[test_indices], ids[test_indices], params,
                          temp_test_data_path)
 
-            # train
-            _, model_path = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
-                                  initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
-                                  id_variable=config.id_variable,
-                                  split_ratio=config.validation_size, batch_size=config.batch_size,
-                                  early_stopping_patience=config.early_stopping_patience,
-                                  use_augmentation=config.use_augmentation)
+            for train_round_i in range(config.max_train_rounds):
+                # train
+                _, model_path, best_val_score = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
+                                      initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
+                                      id_variable=config.id_variable,
+                                      split_ratio=config.validation_size, batch_size=config.batch_size,
+                                      early_stopping_patience=config.early_stopping_patience,
+                                      use_augmentation=config.use_augmentation)
+
+                if best_val_score > config.min_val_score:
+                    break
 
             # test
             fold_result_dict, subject_prediction_label = test(model_path, label_file_path, temp_test_data_path, outcome,

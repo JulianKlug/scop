@@ -62,7 +62,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     )
 
     # Train the model, doing validation at the end of each epoch
-    model.fit(
+    history = model.fit(
         train_dataset,
         validation_data=validation_dataset,
         epochs=epochs,
@@ -71,7 +71,9 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_callback],
     )
 
-    return model, model_path
+    best_val_score = max(history.history["val_" + monitoring_metric])
+
+    return model, model_path, best_val_score
 
 
 if __name__ == '__main__':
