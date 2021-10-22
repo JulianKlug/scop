@@ -115,6 +115,6 @@ def cross_validate(config: dict):
 
 if __name__ == '__main__':
     config = parse_config()
-    with maybe_norby(config.norby, f'Starting Experiment {config.experiment_id}.',
+    with maybe_norby(config.norby, f'Starting Experiment {config.experiment_id}{config.comment}.',
                      f'Experiment finished {config.experiment_id}.', whichbot='scope'):
         cross_validate(config)

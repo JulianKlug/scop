@@ -6,6 +6,19 @@ import random
 random.seed(seed_value)
 import numpy as np
 np.random.seed(seed_value)
+
+import GPUtil
+try:
+    # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    # Get the first available GPU
+    DEVICE_ID_LIST = GPUtil.getFirstAvailable()
+    DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
+    # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
+    print('Using GPU', DEVICE_ID)
+except:
+    print('No GPU found.')
 import tensorflow as tf
 tf.random.set_seed(seed_value)
 
