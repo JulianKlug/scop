@@ -15,5 +15,6 @@
     "cv_n_folds": 2,
     "max_train_rounds": 2,
     "min_val_score": 0.7,
+    "use_ensemble": 1,
     "norby": 0
 }

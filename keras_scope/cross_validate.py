@@ -68,6 +68,8 @@ def cross_validate(config: dict):
             save_dataset(raw_images[test_indices], raw_masks[test_indices], ids[test_indices], params,
                          temp_test_data_path)
 
+            model_paths = []
+            best_val_score_plateaus = []
             for train_round_i in range(config.max_train_rounds):
                 # train
                 _, model_path, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
@@ -77,11 +79,17 @@ def cross_validate(config: dict):
                                       early_stopping_patience=config.early_stopping_patience,
                                       use_augmentation=config.use_augmentation)
 
+                model_paths.append(model_path)
+                best_val_score_plateaus.append(best_val_score_plateau)
                 if best_val_score_plateau > config.min_val_score:
                     break
+                    
+            # if not using an ensemble, use model with best validation score
+            if not config.use_ensemble:
+                model_paths = model_paths[np.argmax(best_val_score_plateaus)]
 
             # test
-            fold_result_dict, subject_prediction_label = test(model_path, label_file_path, temp_test_data_path, outcome,
+            fold_result_dict, subject_prediction_label = test(model_paths, label_file_path, temp_test_data_path, outcome,
                                                               channels, model_input_shape,
                                                               single_subject_predictions=True,
                                                               id_variable=config.id_variable)

@@ -66,6 +66,11 @@ def parse_config(sys_argv=None):
                         default=(46, 46, 46), type=tuple,
                         )
 
+    parser.add_argument('-ens', '--use_ensemble',
+                        help="Use an ensemble of models",
+                        default=1, type=int
+                        )
+
     # PATHS
     parser.add_argument('-c', '--config',
                         help="Use config file to overwrite defaults.",

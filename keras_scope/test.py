@@ -8,7 +8,7 @@ precision = tf.keras.metrics.Precision()
 recall = tf.keras.metrics.Recall()
 
 
-def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape,
+def test(model_paths, label_file_path, imaging_dataset_path, outcome, channels, desired_shape,
          single_subject_predictions = False, id_variable='pid'):
     test_ratio = 1
     batch_size = 200
@@ -17,13 +17,25 @@ def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, d
                                               outcome, channels,
                                               desired_shape, test_ratio, batch_size, id_variable=id_variable)
 
-    model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2], channels=len(channels))
+    if type(model_paths) == list and len(model_paths) > 1:
+
+        models = np.repeat(get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
+                                     channels=len(channels)), len(model_paths))
+        for model_path, model in zip(model_paths, models):
+            model.load_weights(model_path)
+        model_input = tf.keras.Input(shape=(desired_shape[0], desired_shape[1], desired_shape[2], len(channels)))
+        model_outputs = [model(model_input) for model in models]
+        ensemble_output = tf.keras.layers.Average()(model_outputs)
+        model = tf.keras.Model(inputs=model_input, outputs=ensemble_output)
+    else:
+        model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
+                          channels=len(channels))
+        model.load_weights(model_paths)
 
     model.compile(
         metrics=["acc", "AUC", f1_m, precision, recall],
     )
 
-    model.load_weights(model_path)
     result = model.evaluate(test_dataset)
     print(dict(zip(model.metrics_names, result)))
 
@@ -37,11 +49,11 @@ def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, d
 
 
 if __name__ == '__main__':
-    model_path = '/home/hendrik/jk/output/keras_scope/20210821-104512/3d_image_classification.h5'
+    model_paths = '/home/hendrik/jk/output/keras_scope/20210821-104512/3d_image_classification.h5'
     label_file_path = '/mnt/data/hendrik/jk/scope_data/joined_anon_outcomes_2015_2016_2017_2018_df.xlsx'
     imaging_dataset_path = '/mnt/data/hendrik/jk/scope_data/test_noGT_pmaps_15-19_dataset_with_combined_mRS_90_days.npz'
     outcome = "combined_mRS_0-2_90_days"
     channels = [0, 1, 2, 3]
     desired_shape = (46, 46, 46)
 
-    test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape)
+    test(model_paths, label_file_path, imaging_dataset_path, outcome, channels, desired_shape)
