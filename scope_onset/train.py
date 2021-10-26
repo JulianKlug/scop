@@ -1,4 +1,6 @@
 # set fixed seed
+from scope_onset.utils.metrics import RegressionAUC
+
 seed_value= 0
 import os
 os.environ['PYTHONHASHSEED']=str(seed_value)
@@ -62,7 +64,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     if continuous_outcome:
         get_model = get_regression_model
         loss = "mse"
-        metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
+        metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error', RegressionAUC()]
     else:
         loss = "binary_crossentropy"
         metrics = ["acc", 'AUC', f1_m]
