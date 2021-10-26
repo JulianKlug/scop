@@ -36,7 +36,7 @@ from scope.models.get_model import get_model
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_type, model_input_shape,
           initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, early_stopping_patience=100, split_ratio=0.3, batch_size=2,
-          target_metric='max auc', use_augmentation=True, force_cpu=False, weight_decay_coefficient=1e-4,
+          target_metric='max auc', use_augmentation=True, force_cpu=False, weight_decay_coefficient=1e-4, lr_decay_steps=10000000,
           logdir=None):
 
     if force_cpu:
@@ -74,14 +74,13 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
 
     # Learning rate decay
     lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-        initial_learning_rate, decay_steps=config.lr_decay_steps, decay_rate=0.96,
+        initial_learning_rate, decay_steps=lr_decay_steps, decay_rate=0.96,
         staircase=True
     )
     # Compile model.
     model.compile(
         loss=loss,
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
-        # optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
         metrics=metrics,
     )
 
@@ -147,4 +146,5 @@ if __name__ == '__main__':
           target_metric=config.target_metric,
           use_augmentation=config.use_augmentation,
           weight_decay_coefficient=config.weight_decay_coefficient,
+          lr_decay_steps=config.lr_decay_steps,
           logdir=logdir)

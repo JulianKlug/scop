@@ -24,6 +24,7 @@ def cross_validate(config: dict):
 
     channels = config.channels
     outcome = config.outcome
+    model_type = config.model_type
     model_input_shape = config.model_input_shape
     epochs = config.epochs
     initial_learning_rate = config.initial_learning_rate
@@ -74,14 +75,21 @@ def cross_validate(config: dict):
 
             model_paths = []
             best_val_score_plateaus = []
+            # Multiple train rounds can be used to select best model based on validation scope or to construct ensemble
             for train_round_i in range(config.max_train_rounds):
                 # train
-                _, model_path, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
-                                      initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
-                                      id_variable=config.id_variable,
-                                      split_ratio=config.validation_size, batch_size=config.batch_size,
-                                      early_stopping_patience=config.early_stopping_patience,
-                                      use_augmentation=config.use_augmentation)
+                _, model_path, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome,
+                                                              channels, model_type, model_input_shape,
+                                                              initial_learning_rate, epochs=epochs,
+                                                              target_metric=config.target_metric,
+                                                              id_variable=config.id_variable,
+                                                              split_ratio=config.validation_size,
+                                                              batch_size=config.batch_size,
+                                                              early_stopping_patience=config.early_stopping_patience,
+                                                              use_augmentation=config.use_augmentation,
+                                                              continuous_outcome=config.continuous_outcome,
+                                                              lr_decay_steps=config.lr_decay_steps,
+                                                              weight_decay_coefficient=config.weight_decay_coefficient)
 
                 model_paths.append(model_path)
                 best_val_score_plateaus.append(best_val_score_plateau)
@@ -93,11 +101,13 @@ def cross_validate(config: dict):
                 model_paths = model_paths[np.argmax(best_val_score_plateaus)]
 
             # test
-            fold_result_dict, subject_prediction_label = test(model_paths, label_file_path, temp_test_data_path, outcome,
+            fold_result_dict, subject_prediction_label = test(model_paths, model_type, label_file_path,
+                                                              temp_test_data_path, outcome,
                                                               channels, model_input_shape,
                                                               id_variable=config.id_variable,
                                                               single_subject_predictions=True,
-                                                              continuous_outcome=config.continuous_outcome)
+                                                              continuous_outcome=config.continuous_outcome,
+                                                              weight_decay_coefficient=config.weight_decay_coefficient)
 
             # store results
             fold_result_dict.update({'iteration': iteration, 'fold': fold, 'kfold_split_seed': j})

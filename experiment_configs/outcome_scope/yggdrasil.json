@@ -11,7 +11,7 @@
     "epochs" : 1000,
     "initial_learning_rate" : 0.0001,
     "lr_decay_steps":100000,
-    "monitoring_metric": "max auc",
+    "target_metric": "max auc",
     "early_stopping_patience": 400,
     "use_augmentation": 0,
     "cv_n_repeats": 1,
