@@ -21,4 +21,4 @@ conda activate scope
 ulimit -S -n 131072 # setting "soft" limit number of file descriptor per processes
 ulimit -S -u 1546461 # setting soft limit number of processes per user
 
-srun python keras_scope/cross_validate.py -c keras_scope/configs/yggdrasil.json
+srun python scope/cross_validate.py -c experiment_configs/outcome_scope/yggdrasil.json
