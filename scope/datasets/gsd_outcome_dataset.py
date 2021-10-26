@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from preprocessing import min_max_normalize, resize_volume
+from scope.utils.preprocessing import min_max_normalize, resize_volume
 import pandas as pd
 from scope.datasets.base_dataset import base_dataset
 from scope.utils.augmentations import RandAugment3D
