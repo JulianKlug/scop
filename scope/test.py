@@ -2,14 +2,14 @@ import numpy as np
 import tensorflow as tf
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from metrics import f1_m
-from scope_onset.models.basic_model import get_regression_model, get_classification_model
+from scope.models.cnn3d import get_regression_model, get_classification_model
 
 precision = tf.keras.metrics.Precision()
 recall = tf.keras.metrics.Recall()
 
 
-def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, desired_shape, id_variable,
-         single_subject_predictions = False, continuous_outcome=False):
+def test(model_paths, label_file_path, imaging_dataset_path, outcome, channels, desired_shape,
+         single_subject_predictions = False, id_variable='pid', continuous_outcome=False):
     test_ratio = 1
     batch_size = 200
 
@@ -28,11 +28,25 @@ def test(model_path, label_file_path, imaging_dataset_path, outcome, channels, d
 
     model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2], channels=len(channels))
 
+    if type(model_paths) == list and len(model_paths) > 1:
+
+        models = np.repeat(get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
+                                     channels=len(channels)), len(model_paths))
+        for model_path, model in zip(model_paths, models):
+            model.load_weights(model_path)
+        model_input = tf.keras.Input(shape=(desired_shape[0], desired_shape[1], desired_shape[2], len(channels)))
+        model_outputs = [model(model_input) for model in models]
+        ensemble_output = tf.keras.layers.Average()(model_outputs)
+        model = tf.keras.Model(inputs=model_input, outputs=ensemble_output)
+    else:
+        model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
+                          channels=len(channels))
+        model.load_weights(model_paths)
+
     model.compile(
         metrics=metrics,
     )
 
-    model.load_weights(model_path)
     result = model.evaluate(test_dataset)
     print(dict(zip(model.metrics_names, result)))
 

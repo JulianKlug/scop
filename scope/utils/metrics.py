@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class RegressionAUC(tf.keras.metrics.Metric):
-    def __init__(self, name='AUC', **kwargs):
+    def __init__(self, name='auc', **kwargs):
         super(RegressionAUC, self).__init__(name=name, **kwargs)
         self.internal_model = tf.keras.metrics.AUC()
 

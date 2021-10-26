@@ -1,6 +1,4 @@
 # set fixed seed
-from scope_onset.utils.metrics import RegressionAUC
-
 seed_value= 0
 import os
 os.environ['PYTHONHASHSEED']=str(seed_value)
@@ -25,18 +23,18 @@ import tensorflow as tf
 tf.random.set_seed(seed_value)
 
 from modun.file_io import dict2json
-from scope_onset.utils.utils import ensure_dir
-from scope_onset.models.resnet3d import Resnet3DBuilder
-from scope_onset.parse_config import parse_config
+from scope.utils.utils import ensure_dir
+from scope.parse_config import parse_config
 from datetime import datetime
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from metrics import f1_m
-from scope_onset.models.basic_model import get_regression_model, get_classification_model
+from scope.utils.metrics import RegressionAUC
+from scope.models.get_model import get_model
 
 
-def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_input_shape,
+def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_type, model_input_shape,
           initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, early_stopping_patience=100, split_ratio=0.3, batch_size=2,
           target_metric='max auc', use_augmentation=True, force_cpu=False, weight_decay_coefficient=1e-4,
           logdir=None):
@@ -62,24 +60,16 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
 
     # Frame as regression vs classification
     if continuous_outcome:
-        get_model = get_regression_model
         loss = "mse"
         metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error', RegressionAUC()]
     else:
         loss = "binary_crossentropy"
         metrics = ["acc", 'AUC', f1_m]
-        get_model = get_classification_model
 
     # Build model.
-    # model = get_model(width=model_input_shape[0], height=model_input_shape[1], depth=model_input_shape[2],
-    #                   channels=len(channels), weight_decay=weight_decay_coefficient)
-    model = Resnet3DBuilder().build_resnet_50((model_input_shape[0], model_input_shape[1], model_input_shape[2], len(channels)),
-                                              1, regression=continuous_outcome, reg_factor=weight_decay_coefficient)
-
-    # import models.efficientnet_3D.tfkeras as efn
-    # model = efn.EfficientNetB0(input_shape=
-    #                            (model_input_shape[0], model_input_shape[1], model_input_shape[2], len(channels)),
-    #                             weights=None, classes=1, include_top=True, regression=continuous_outcome)
+    model = get_model(width=model_input_shape[0], height=model_input_shape[1], depth=model_input_shape[2],
+                      n_channels=len(channels), model_type=model_type, weight_decay_coefficient=weight_decay_coefficient,
+                      regression=continuous_outcome)
     model.summary()
 
     # Learning rate decay
@@ -92,7 +82,6 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         loss=loss,
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
         # optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
-        # optimizer='adam',
         metrics=metrics,
     )
 
@@ -117,7 +106,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     )
 
     # Train the model, doing validation at the end of each epoch
-    model.fit(
+    history = model.fit(
         train_dataset,
         validation_data=validation_dataset,
         epochs=epochs,
@@ -126,7 +115,15 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_callback],
     )
 
-    return model, model_path
+    best_val_score_index = np.argmax(history.history["val_" + target_metric[1]])
+    plateau_radius = 5
+    try:
+        best_val_score_plateau = np.mean(history.history["val_" + target_metric[1]]
+                                         [best_val_score_index-plateau_radius:best_val_score_index+plateau_radius])
+    except:
+        best_val_score_plateau = history.history["val_" + target_metric[1]][best_val_score_index]
+
+    return model, model_path, best_val_score_plateau
 
 
 if __name__ == '__main__':
@@ -140,7 +137,7 @@ if __name__ == '__main__':
 
 
     train(config.label_file_path, config.imaging_dataset_path, config.output_dir,
-          config.outcome, config.channels, config.model_input_shape,
+          config.outcome, config.channels, config.model_type, config.model_input_shape,
           config.initial_learning_rate, config.id_variable,
           continuous_outcome=config.continuous_outcome,
           epochs=config.epochs,

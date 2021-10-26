@@ -9,8 +9,8 @@ from norby.utils import maybe_norby
 
 from parse_config import parse_config
 from test import test
-from scope_onset.utils.utils import ensure_dir, save_dataset
-from scope_onset.utils.data_splitting import SortedStratifiedKFold
+from scope.utils.utils import ensure_dir, save_dataset
+from scope.utils.data_splitting import SortedStratifiedKFold
 from train import train
 
 
@@ -29,7 +29,7 @@ def cross_validate(config: dict):
     initial_learning_rate = config.initial_learning_rate
 
     ensure_dir(output_dir)
-    output_dir = os.path.join(output_dir, 'cv_' + config.experiment_id)
+    output_dir = os.path.join(output_dir, 'cv_' + config.experiment_id + config.comment)
     ensure_dir(output_dir)
     dict2json(os.path.join(output_dir, 'config.json'), vars(config))
 
@@ -37,7 +37,7 @@ def cross_validate(config: dict):
     params = np.load(imaging_dataset_path, allow_pickle=True)['params']
     ids = np.load(imaging_dataset_path, allow_pickle=True)['ids']
     outcomes_df = pd.read_excel(label_file_path)
-    labels = np.array([outcomes_df.loc[outcomes_df['pid'] == subj_id, outcome].iloc[0] for
+    labels = np.array([outcomes_df.loc[outcomes_df[config.id_variable] == subj_id, outcome].iloc[0] for
                        subj_id in ids])
     raw_images = np.load(imaging_dataset_path, allow_pickle=True)['ct_inputs']
     raw_masks = np.load(imaging_dataset_path, allow_pickle=True)['brain_masks']
@@ -72,15 +72,28 @@ def cross_validate(config: dict):
             save_dataset(raw_images[test_indices], raw_masks[test_indices], ids[test_indices], params,
                          temp_test_data_path)
 
-            # train
-            _, model_path = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
-                                  initial_learning_rate, id_variable=config.id_variable, epochs=epochs,
-                                  target_metric=config.target_metric,
-                                  split_ratio=config.validation_size, batch_size=config.batch_size,
-                                  continuous_outcome=config.continuous_outcome)
+            model_paths = []
+            best_val_score_plateaus = []
+            for train_round_i in range(config.max_train_rounds):
+                # train
+                _, model_path, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome, channels, model_input_shape,
+                                      initial_learning_rate, epochs, monitoring_metric=config.monitoring_metric,
+                                      id_variable=config.id_variable,
+                                      split_ratio=config.validation_size, batch_size=config.batch_size,
+                                      early_stopping_patience=config.early_stopping_patience,
+                                      use_augmentation=config.use_augmentation)
+
+                model_paths.append(model_path)
+                best_val_score_plateaus.append(best_val_score_plateau)
+                if best_val_score_plateau > config.min_val_score:
+                    break
+
+            # if not using an ensemble, use model with best validation score
+            if not config.use_ensemble:
+                model_paths = model_paths[np.argmax(best_val_score_plateaus)]
 
             # test
-            fold_result_dict, subject_prediction_label = test(model_path, label_file_path, temp_test_data_path, outcome,
+            fold_result_dict, subject_prediction_label = test(model_paths, label_file_path, temp_test_data_path, outcome,
                                                               channels, model_input_shape,
                                                               id_variable=config.id_variable,
                                                               single_subject_predictions=True,
@@ -115,6 +128,6 @@ def cross_validate(config: dict):
 
 if __name__ == '__main__':
     config = parse_config()
-    with maybe_norby(config.norby, f'Starting Scope Onset Experiment {config.experiment_id}.',
-                     f'Scope Onset Experiment finished {config.experiment_id}.', whichbot='scope'):
+    with maybe_norby(config.norby, f'Starting Experiment {config.experiment_id}{config.comment}.',
+                     f'Experiment finished {config.experiment_id}.', whichbot='scope'):
         cross_validate(config)

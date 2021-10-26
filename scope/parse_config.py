@@ -31,6 +31,11 @@ def parse_config(sys_argv=None):
                         default='auc',
                         type=str
                         )
+    parser.add_argument('--early_stopping_patience',
+                        help="Patience for early stopping",
+                        default=100,
+                        type=int
+                        )
     parser.add_argument('--use-augmentation',
                         help="Use data augmentation on training",
                         default=1,
@@ -69,6 +74,21 @@ def parse_config(sys_argv=None):
     parser.add_argument('-mis', '--model_input_shape',
                         help="Desired input shape for model",
                         default=(46, 46, 46), type=tuple,
+                        )
+
+    parser.add_argument('-ens', '--use_ensemble',
+                        help="Use an ensemble of models",
+                        default=1, type=int
+                        )
+
+    parser.add_argument('-tr', '--max_train_rounds',
+                        help="Maximum training round either for construction of ensemble or to choose best validation model",
+                        default=1, type=int
+                        )
+    parser.add_argument('-minvs', '--min_val_score',
+                        help="Minimum validation score to obtain in training rounds, "
+                             "if crossed training rounds are stopped",
+                        default=1, type=float
                         )
 
     # PATHS

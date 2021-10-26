@@ -2,8 +2,9 @@ import numpy as np
 import tensorflow as tf
 from preprocessing import min_max_normalize, resize_volume
 import pandas as pd
-from datasets.base_dataset import base_dataset
-from utils.augmentations import RandAugment3D
+from scope.datasets.base_dataset import base_dataset
+from scope.utils.augmentations import RandAugment3D
+
 
 augment = RandAugment3D(n=2)
 
@@ -63,9 +64,9 @@ def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, chan
         applied_train_augmentation = no_augmentation
 
     train_dataset, validation_dataset, id_allocation = base_dataset(images, labels, test_ratio, batch_size,
-                                                                                  image_preprocessing(min=0, max=400,
-                                                                     desired_shape=desired_shape),
-                                                                                  applied_train_augmentation, validation_augmentation,
-                                                                                  ids=ids)
+                                                                     image_preprocessing(min=0, max=400,
+                                                                                         desired_shape=desired_shape),
+                                                                     applied_train_augmentation, validation_augmentation,
+                                                                     ids=ids, continuous_outcome=continuous_outcome)
 
     return train_dataset, validation_dataset, id_allocation
