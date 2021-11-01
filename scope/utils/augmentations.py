@@ -24,14 +24,59 @@ def elastic(volume):
     return transformer(volume)
 
 
-def rotate(volume):
-    transformer = RandAffine(prob=1, rotate_range=((30, -30), (10, -10), (10, -10)), padding_mode='zeros')
+def rotate_3d(volume):
+    # full level in radians (approx 30°)
+    full_level = 0.5
+    transformer = RandAffine(prob=1, rotate_range=((full_level, -full_level), (full_level, -full_level),
+                                                   (full_level, -full_level)), padding_mode='zeros')
     transformed_volume = transformer(volume)
     return safe_numpy_conversion(transformed_volume)
 
+def rotate_x(volume):
+    # rotation along x axis
+    # full level in radians (approx 30°)
+    full_level = 0.5
+    transformer = RandAffine(prob=1, rotate_range=((full_level, -full_level), (0), (0)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
 
-def shear(volume):
-    transformer = RandAffine(prob=1, shear_range=((1, -1), (1, -1), (1, -1)), padding_mode='zeros')
+def rotate_y(volume):
+    # rotation along y axis
+    # full level in radians (approx 30°)
+    full_level = 0.5
+    transformer = RandAffine(prob=1, rotate_range=((0), (full_level, -full_level), (0)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
+
+def rotate_z(volume):
+    # rotation along z axis
+    # full level in radians (approx 30°)
+    full_level = 0.5
+    transformer = RandAffine(prob=1, rotate_range=((0), (0), (full_level, -full_level)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
+
+def shear_3d(volume):
+    full_level = 0.3
+    transformer = RandAffine(prob=1, shear_range=((full_level, -full_level), (full_level, -full_level), (full_level, -full_level)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
+
+def shear_x(volume):
+    full_level = 0.3
+    transformer = RandAffine(prob=1, shear_range=((full_level, -full_level), (0), (0)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
+
+def shear_y(volume):
+    full_level = 0.3
+    transformer = RandAffine(prob=1, shear_range=((0), (full_level, -full_level), (0)), padding_mode='zeros')
+    transformed_volume = transformer(volume)
+    return safe_numpy_conversion(transformed_volume)
+
+def shear_z(volume):
+    full_level = 0.3
+    transformer = RandAffine(prob=1, shear_range=((0), (0), (full_level, -full_level)), padding_mode='zeros')
     transformed_volume = transformer(volume)
     return safe_numpy_conversion(transformed_volume)
 
@@ -43,7 +88,8 @@ def translate(volume):
 
 
 def scale(volume):
-    transformer = RandAffine(prob=1, scale_range=(0.9, 1.1), padding_mode='zeros')
+    full_level = 0.3
+    transformer = RandAffine(prob=1, scale_range=full_level, padding_mode='zeros')
     transformed_volume = transformer(volume)
     return safe_numpy_conversion(transformed_volume)
 
@@ -102,11 +148,15 @@ def safe_numpy_conversion(object):
 def augment_list():
     l = [
         identity,
-        elastic,
-        rotate,
+        # elastic,
+        rotate_x,
+        rotate_y,
+        rotate_z,
         translate,
         scale,
-        shear,
+        shear_x,
+        shear_y,
+        shear_z,
         shiftIntensity,
         equalize,
         solarize,
@@ -138,6 +188,7 @@ class RandAugment3D:
         volume = to_channels_first(volume).numpy()
         ops = random.sample(self.augment_list, k=self.n)
         for op in ops:
+            print(op.__name__)
             volume = op(volume)
         volume = to_channels_last(volume)
         volume = tf.cast(volume, tf.float32)
