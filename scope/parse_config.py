@@ -41,10 +41,15 @@ def parse_config(sys_argv=None):
                         default=1,
                         type=int
                         )
+    parser.add_argument('--augmentation_magnitude',
+                        help="Magnitude for data augmentation on training",
+                        default=1,
+                        type=float
+                        )
     parser.add_argument('--weight_decay_coefficient',
                         help="Coefficient for weight decay",
                         default=1e-4,
-                        type=int
+                        type=float
                         )
 
     # IMAGE PARAMETERS
