@@ -29,14 +29,14 @@ from datetime import datetime
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from metrics import f1_m
+from scope.utils.metrics import f1_m
 from scope.utils.metrics import RegressionAUC
 from scope.models.get_model import get_model
 
 
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_type, model_input_shape,
           initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, early_stopping_patience=100, split_ratio=0.3, batch_size=2,
-          target_metric='max auc', use_augmentation=True, force_cpu=False, weight_decay_coefficient=1e-4, lr_decay_steps=10000000,
+          target_metric='max auc', use_augmentation=True, augmentation_magnitude=10, force_cpu=False, weight_decay_coefficient=1e-4, lr_decay_steps=10000000,
           logdir=None):
 
     if force_cpu:
@@ -56,7 +56,8 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
                                                                 outcome, channels,
                                                                 model_input_shape, split_ratio, batch_size, id_variable,
                                                                                continuous_outcome=continuous_outcome,
-                                                                               use_augmentation=use_augmentation)
+                                                                               use_augmentation=use_augmentation,
+                                                                               augmentation_magnitude=augmentation_magnitude)
 
     # Frame as regression vs classification
     if continuous_outcome:
@@ -145,6 +146,7 @@ if __name__ == '__main__':
           batch_size=config.batch_size,
           target_metric=config.target_metric,
           use_augmentation=config.use_augmentation,
+          augmentation_magnitude=config.augmentation_magnitude,
           weight_decay_coefficient=config.weight_decay_coefficient,
           lr_decay_steps=config.lr_decay_steps,
           logdir=logdir)

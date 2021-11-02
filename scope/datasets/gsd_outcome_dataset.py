@@ -6,8 +6,6 @@ from scope.datasets.base_dataset import base_dataset
 from scope.utils.augmentations import RandAugment3D
 
 
-augment = RandAugment3D(n=2)
-
 def image_preprocessing(min, max, desired_shape):
     def process(volume):
         volume = min_max_normalize(volume, min, max)
@@ -17,16 +15,24 @@ def image_preprocessing(min, max, desired_shape):
 
     return process
 
-def train_augmentation(volume, label):
-    """Process training data by rotating and adding a channel."""
-    volume = tf.numpy_function(augment, [volume], tf.float32)
-    volume = tf.convert_to_tensor(volume)
-    return volume, label
+
+def get_train_augmentation(augmentation):
+    augment = augmentation
+
+    def train_augmentation(volume, label):
+        """Process training data by rotating and adding a channel."""
+        volume = tf.numpy_function(augment, [volume], tf.float32)
+        volume = tf.convert_to_tensor(volume)
+        return volume, label
+
+    return train_augmentation
+
 
 def no_augmentation(volume, label):
     """Do not apply any augmentation"""
     # volume = tf.expand_dims(volume, axis=3)
     return volume, label
+
 
 def validation_augmentation(volume, label):
     """Process validation data by only adding a channel."""
@@ -35,7 +41,13 @@ def validation_augmentation(volume, label):
 
 
 def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, channels, desired_shape, test_ratio,
-                            batch_size, id_variable, continuous_outcome=False, use_augmentation=True):
+                            batch_size, id_variable, continuous_outcome=False, use_augmentation=True, augmentation_magnitude=10):
+    augment = RandAugment3D(n=2, magnitude=augmentation_magnitude, excluded_operations=['shiftIntensity',
+                                                                    'equalize',
+                                                                    'solarize',
+                                                                    'histogramShift',
+                                                                    'sharpen',
+                                                                    'adjustContrast'])
     params = np.load(imaging_dataset_path, allow_pickle=True)['params']
     try:
         print('Using channels:', [params.item()['ct_sequences'][channel] for channel in channels])
@@ -59,14 +71,14 @@ def get_gsd_outcome_dataset(label_file_path, imaging_dataset_path, outcome, chan
     images = raw_images * raw_masks
 
     if use_augmentation:
-        applied_train_augmentation = train_augmentation
+        applied_train_augmentation = get_train_augmentation(augment)
     else:
         applied_train_augmentation = no_augmentation
 
     train_dataset, validation_dataset, id_allocation = base_dataset(images, labels, test_ratio, batch_size,
-                                                                     image_preprocessing(min=0, max=400,
-                                                                                         desired_shape=desired_shape),
-                                                                     applied_train_augmentation, validation_augmentation,
-                                                                     ids=ids, continuous_outcome=continuous_outcome)
+                                                                    image_preprocessing(min=0, max=400,
+                                                                                        desired_shape=desired_shape),
+                                                                    applied_train_augmentation, validation_augmentation,
+                                                                    ids=ids, continuous_outcome=continuous_outcome)
 
     return train_dataset, validation_dataset, id_allocation

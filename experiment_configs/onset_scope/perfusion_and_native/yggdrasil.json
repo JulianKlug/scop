@@ -1,7 +1,7 @@
 {
-    "imaging_dataset_path": "/mnt/data/hendrik/jk/scope_data/scope_onset_data/train_with_ncct_dataset_with_onset_to_imaging.npz",
-    "label_file_path": "/mnt/data/hendrik/jk/scope_data/scope_onset_data/with_imaging_curated_completed_joined_anon_outcome_df.xlsx",
-    "output_dir": "/home/hendrik/jk/output/onset_scope/classification/perfusion_and_native/resnet",
+    "imaging_dataset_path": "/home/users/k/klug/data/scope/with_ncct_dataset_with_onset_to_imaging.npz",
+    "label_file_path": "/home/users/k/klug/data/scope/with_imaging_curated_completed_joined_anon_outcome_df.xlsx",
+    "output_dir": "/home/users/k/klug/output/onset_scope/classification",
     "channels" : [0, 1, 2, 3, 4],
     "id_variable": "pid",
     "outcome": "onset_to_imaging_0-4.5",
@@ -19,5 +19,5 @@
     "cv_n_repeats": 1,
     "cv_n_folds": 5,
     "norby": 1,
-    "comment": "_classification_with_augmentation_only_physical_m1.25_noRotate"
+    "comment": "_cv_classification_with_augmentation"
 }
