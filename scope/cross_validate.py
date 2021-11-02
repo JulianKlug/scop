@@ -8,10 +8,10 @@ from modun.file_io import dict2json
 from norby.utils import maybe_norby
 
 from parse_config import parse_config
-from test import test
+from scope.test import test
 from scope.utils.utils import ensure_dir, save_dataset
 from scope.utils.data_splitting import SortedStratifiedKFold
-from train import train
+from scope.train import train
 
 
 def cross_validate(config: dict):
@@ -87,6 +87,7 @@ def cross_validate(config: dict):
                                                               batch_size=config.batch_size,
                                                               early_stopping_patience=config.early_stopping_patience,
                                                               use_augmentation=config.use_augmentation,
+                                                              augmentation_magnitude=config.augmentation_magnitude,
                                                               continuous_outcome=config.continuous_outcome,
                                                               lr_decay_steps=config.lr_decay_steps,
                                                               weight_decay_coefficient=config.weight_decay_coefficient)
