@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from metrics import f1_m
+from scope.utils.metrics import f1_m
 from scope.models.get_model import get_model
 
 precision = tf.keras.metrics.Precision()
@@ -41,7 +41,7 @@ def test(model_paths, model_type, label_file_path, imaging_dataset_path, outcome
         model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
                           n_channels=len(channels), model_type=model_type, regression=continuous_outcome,
                           weight_decay_coefficient=weight_decay_coefficient)
-        model.load_weights(model_paths)
+        model.load_weights(model_paths[0])
 
     model.compile(
         metrics=metrics,
