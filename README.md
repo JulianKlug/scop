@@ -1,5 +1,5 @@
 # scope
-Stroke Clinical Outcome Prediction Experiment
+Stroke Clinical Outcome & Onset Prediction Experiment
 
 
 ## GPU setup issues
