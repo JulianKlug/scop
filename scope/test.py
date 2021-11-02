@@ -41,7 +41,7 @@ def test(model_paths, model_type, label_file_path, imaging_dataset_path, outcome
         model = get_model(width=desired_shape[0], height=desired_shape[1], depth=desired_shape[2],
                           n_channels=len(channels), model_type=model_type, regression=continuous_outcome,
                           weight_decay_coefficient=weight_decay_coefficient)
-        model.load_weights(model_paths[0])
+        model.load_weights(model_paths)
 
     model.compile(
         metrics=metrics,

@@ -98,7 +98,7 @@ def cross_validate(config: dict):
                     break
 
             # if not using an ensemble, use model with best validation score
-            if not config.use_ensemble:
+            if not config.use_ensemble or len(model_paths) == 1:
                 model_paths = model_paths[np.argmax(best_val_score_plateaus)]
 
             # test
