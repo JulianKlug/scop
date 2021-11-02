@@ -90,9 +90,9 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     # Define callbacks.
     if logdir is None:
         logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d_%H%M%S"))
-    model_path = os.path.join(logdir, '3d_model.h5')
+
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
-        model_path, save_best_only=True,
+        os.path.join(logdir, '3d_model_{epoch:02d}.h5'), save_best_only=True,
         monitor='val_' + target_metric[1], mode=target_metric[0]
     )
     early_stopping_cb = keras.callbacks.EarlyStopping(
@@ -123,7 +123,11 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     except:
         best_val_score_plateau = history.history["val_" + target_metric[1]][best_val_score_index]
 
-    return model, model_path, best_val_score_plateau
+    model_path = os.path.join(logdir,
+                              [file for file in os.listdir(logdir) if file.endswith('.h5')][0])
+    saved_epoch = model_path.split()[0].split('_')[-1]
+
+    return model, model_path, saved_epoch, best_val_score_plateau
 
 
 if __name__ == '__main__':
