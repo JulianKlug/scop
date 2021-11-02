@@ -14,6 +14,7 @@
     "target_metric": "max auc",
     "early_stopping_patience": 100,
     "use_augmentation": 1,
+    "augmentation_magnitude": 1.25,
     "cv_n_repeats": 1,
     "cv_n_folds": 2,
     "max_train_rounds": 1,
