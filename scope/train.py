@@ -92,7 +92,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d_%H%M%S"))
 
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
-        os.path.join(logdir, '3d_model_{epoch:02d}.h5'), save_best_only=True,
+        os.path.join(logdir, '3d_model_{epoch}.h5'), save_best_only=True,
         monitor='val_' + target_metric[1], mode=target_metric[0]
     )
     early_stopping_cb = keras.callbacks.EarlyStopping(
@@ -123,11 +123,17 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     except:
         best_val_score_plateau = history.history["val_" + target_metric[1]][best_val_score_index]
 
-    model_path = os.path.join(logdir,
-                              [file for file in os.listdir(logdir) if file.endswith('.h5')][0])
-    saved_epoch = model_path.split()[0].split('_')[-1]
+    # only retain best model
+    saved_model_list = [file for file in os.listdir(logdir) if file.endswith('.h5')]
+    best_model_index = np.argmax([int(file.split('.')[0].split('_')[-1]) for file in saved_model_list])
+    best_model_path = os.path.join(logdir, saved_model_list[best_model_index])
+    best_saved_epoch = int(best_model_path.split('.')[-2].split('_')[-1])
+    # delete all other saved models
+    saved_model_list.remove(saved_model_list[best_model_index])
+    for model_file in saved_model_list:
+        os.remove(os.path.join(logdir, model_file))
 
-    return model, model_path, saved_epoch, best_val_score_plateau
+    return model, best_model_path, best_saved_epoch, best_val_score_plateau
 
 
 if __name__ == '__main__':
