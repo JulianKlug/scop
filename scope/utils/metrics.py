@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import backend as K
-
+import tensorflow_probability as tfp
 
 def recall_m(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -42,3 +42,28 @@ class RegressionAUC(tf.keras.metrics.Metric):
 
     def reset_state(self):
         self.internal_model.reset_state()
+
+
+class RunningAUC(tf.keras.metrics.Metric):
+
+  def __init__(self, name='running_auc', history_length=10, **kwargs):
+    super(RunningAUC, self).__init__(name=name, **kwargs)
+    self.internal_model = tf.keras.metrics.AUC()
+    self.history_length = history_length
+    self.running_history = []
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+      self.internal_model.update_state(y_true, y_pred, sample_weight)
+
+  @tf.function
+  def result(self):
+    self.running_history.append(self.internal_model.result())
+    # if len(self.running_history) > self.history_length:
+    #     self.running_history.pop()
+    return tfp.stats.percentile(self.running_history, 50.0, interpolation='midpoint')
+    # return tf.numpy_function(np.median, self.running_history, tf.float32)
+    # return tf.py_function(np.median, self.running_history, tf.float32)
+    # return tf.cast(np.median(self.running_history), tf.float32)
+
+  def reset_state(self):
+      self.internal_model.reset_state()

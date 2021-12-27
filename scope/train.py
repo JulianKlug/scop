@@ -29,7 +29,7 @@ from datetime import datetime
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from scope.utils.metrics import f1_m
+from scope.utils.metrics import f1_m, RunningAUC
 from scope.utils.metrics import RegressionAUC
 from scope.models.get_model import get_model
 
@@ -65,7 +65,8 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error', RegressionAUC()]
     else:
         loss = "binary_crossentropy"
-        metrics = ["acc", 'AUC', f1_m]
+        running_auc = RunningAUC()
+        metrics = ["acc", 'AUC', f1_m, running_auc]
 
     # Build model.
     model = get_model(width=model_input_shape[0], height=model_input_shape[1], depth=model_input_shape[2],

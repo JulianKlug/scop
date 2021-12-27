@@ -17,5 +17,4 @@ def get_model(width: int, height: int, depth: int, n_channels: int, model_type: 
                                    weights=None, classes=1, include_top=True, regression=regression)
     else:
         raise ValueError(f'{model_type} is not implemented yet.')
-
     return model

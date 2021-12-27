@@ -26,11 +26,6 @@ def parse_config(sys_argv=None):
                         default=0.3,
                         type=float,
                         )
-    parser.add_argument('--monitoring-metric',
-                        help="What metric to use for best model saving",
-                        default='auc',
-                        type=str
-                        )
     parser.add_argument('--early_stopping_patience',
                         help="Patience for early stopping",
                         default=100,
