@@ -1,4 +1,5 @@
 import tensorflow as tf
+tf.config.run_functions_eagerly(True)
 from tensorflow.keras import backend as K
 import tensorflow_probability as tfp
 
@@ -52,18 +53,20 @@ class RunningAUC(tf.keras.metrics.Metric):
     self.history_length = history_length
     self.running_history = []
 
+  @tf.function
   def update_state(self, y_true, y_pred, sample_weight=None):
       self.internal_model.update_state(y_true, y_pred, sample_weight)
 
   @tf.function
   def result(self):
-    self.running_history.append(self.internal_model.result())
-    # if len(self.running_history) > self.history_length:
-    #     self.running_history.pop()
-    return tfp.stats.percentile(self.running_history, 50.0, interpolation='midpoint')
-    # return tf.numpy_function(np.median, self.running_history, tf.float32)
-    # return tf.py_function(np.median, self.running_history, tf.float32)
-    # return tf.cast(np.median(self.running_history), tf.float32)
+    current_epoch_with_history = [self.internal_model.result().numpy()] + self.running_history
+    if len(self.running_history) == 0:
+        return self.internal_model.result()
+    return tfp.stats.percentile(current_epoch_with_history, 50.0, interpolation='midpoint')
 
+  @tf.function
   def reset_state(self):
+      self.running_history.append(self.internal_model.result().numpy())
+      if len(self.running_history) > self.history_length:
+          self.running_history.pop()
       self.internal_model.reset_state()

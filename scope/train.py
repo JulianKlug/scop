@@ -20,6 +20,7 @@ try:
 except:
     print('No GPU found.')
 import tensorflow as tf
+tf.config.run_functions_eagerly(True)
 tf.random.set_seed(seed_value)
 
 from modun.file_io import dict2json
@@ -65,8 +66,8 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error', RegressionAUC()]
     else:
         loss = "binary_crossentropy"
-        running_auc = RunningAUC()
-        metrics = ["acc", 'AUC', f1_m, running_auc]
+        # running_auc = RunningAUC()
+        metrics = ["acc", 'AUC', f1_m, RunningAUC()]
 
     # Build model.
     model = get_model(width=model_input_shape[0], height=model_input_shape[1], depth=model_input_shape[2],
