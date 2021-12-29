@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import backend as K
-import tensorflow_probability as tfp
+import numpy as np
 
 def recall_m(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -44,26 +44,25 @@ class RegressionAUC(tf.keras.metrics.Metric):
         self.internal_model.reset_state()
 
 
-class RunningAUC(tf.keras.metrics.Metric):
+def running_average(x:[np.array, list], N:int=10) -> np.array:
+    '''
+    Compute the running average of a sequence of values and return a sequence of the same length.
+    Args:
+        x: sequence of values
+        N: size of the running average window
+        if N is even, window will extend N/2 to the left and N/2 to the right
+        if N is odd, window will extend (N-1)/2 to the left and (N-1)/2 to the right
+    Returns: np.array with the same length as x
+    '''
+    if not isinstance(x, np.ndarray):
+        x = np.array(x)
+    out = np.zeros(x.shape)
+    for i in range(x.shape[0]):
+        if i < N//2:
+            out[i] = np.mean(x[:i+(N//2+1)])
+        elif i > x.shape[0] - (N//2+1):
+            out[i] = np.mean(x[i-N//2:])
+        else:
+            out[i] = np.mean(x[i-N//2: i+(N//2+1)])
+    return out
 
-  def __init__(self, name='running_auc', history_length=10, **kwargs):
-    super(RunningAUC, self).__init__(name=name, **kwargs)
-    self.internal_model = tf.keras.metrics.AUC()
-    self.history_length = history_length
-    self.running_history = []
-
-  def update_state(self, y_true, y_pred, sample_weight=None):
-      self.internal_model.update_state(y_true, y_pred, sample_weight)
-
-  @tf.function
-  def result(self):
-    self.running_history.append(self.internal_model.result())
-    # if len(self.running_history) > self.history_length:
-    #     self.running_history.pop()
-    return tfp.stats.percentile(self.running_history, 50.0, interpolation='midpoint')
-    # return tf.numpy_function(np.median, self.running_history, tf.float32)
-    # return tf.py_function(np.median, self.running_history, tf.float32)
-    # return tf.cast(np.median(self.running_history), tf.float32)
-
-  def reset_state(self):
-      self.internal_model.reset_state()

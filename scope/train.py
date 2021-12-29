@@ -29,7 +29,7 @@ from datetime import datetime
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
 from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
-from scope.utils.metrics import f1_m, RunningAUC
+from scope.utils.metrics import f1_m, running_average
 from scope.utils.metrics import RegressionAUC
 from scope.models.get_model import get_model
 
@@ -65,8 +65,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error', RegressionAUC()]
     else:
         loss = "binary_crossentropy"
-        running_auc = RunningAUC()
-        metrics = ["acc", 'AUC', f1_m, running_auc]
+        metrics = ["acc", 'AUC', f1_m]
 
     # Build model.
     model = get_model(width=model_input_shape[0], height=model_input_shape[1], depth=model_input_shape[2],
@@ -93,7 +92,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         logdir = os.path.join(main_log_dir, datetime.now().strftime("%Y%m%d_%H%M%S"))
 
     checkpoint_cb = keras.callbacks.ModelCheckpoint(
-        os.path.join(logdir, '3d_model_{epoch}.h5'), save_best_only=True,
+        os.path.join(logdir, '3d_model_{epoch}.h5'), save_best_only=False,
         monitor='val_' + target_metric[1], mode=target_metric[0]
     )
     early_stopping_cb = keras.callbacks.EarlyStopping(
@@ -117,18 +116,38 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     )
 
     best_val_score_index = np.argmax(history.history["val_" + target_metric[1]])
-    plateau_radius = 5
-    try:
-        best_val_score_plateau = np.mean(history.history["val_" + target_metric[1]]
-                                         [best_val_score_index-plateau_radius:best_val_score_index+plateau_radius])
-    except:
-        best_val_score_plateau = history.history["val_" + target_metric[1]][best_val_score_index]
+    plateau_size = 10
+    moving_average_val_score = running_average(history.history["val_" + target_metric[1]], N=plateau_size)
+    # TODO: maybe try to weight moving average with current value
+    best_moving_average_val_score_epoch = np.argmax(moving_average_val_score) + 1
+    best_val_score_plateau = moving_average_val_score[np.argmax(moving_average_val_score)]
+    print('Best validation plateau centers at epoch:', best_moving_average_val_score_epoch)
+    print('Best validation plateau value:', best_val_score_plateau)
+    print('Best validation plateau:', history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch - plateau_size//2:best_moving_average_val_score_epoch + plateau_size//2])
+
+
+    # plateau_radius = 5
+    # try:
+    #     best_val_score_plateau = np.mean(history.history["val_" + target_metric[1]]
+    #                                      [best_val_score_index-plateau_radius:best_val_score_index+plateau_radius])
+    # except:
+    #     best_val_score_plateau = history.history["val_" + target_metric[1]][best_val_score_index]
 
     # only retain best model
     saved_model_list = [file for file in os.listdir(logdir) if file.endswith('.h5')]
-    best_model_index = np.argmax([int(file.split('.')[0].split('_')[-1]) for file in saved_model_list])
-    best_model_path = os.path.join(logdir, saved_model_list[best_model_index])
+
+    model_selection_method = 'best_plateau_val_score'
+    if model_selection_method == 'best_plateau_val_score':
+        best_model_file = [file for file in saved_model_list
+                           if int(file.split('_')[-1].split('.')[0]) == best_moving_average_val_score_epoch][0]
+        best_model_path = os.path.join(logdir, best_model_file)
+        best_model_index = saved_model_list.index(best_model_file)
+    if model_selection_method == 'last_saved':
+        best_model_index = np.argmax([int(file.split('.')[0].split('_')[-1]) for file in saved_model_list])
+        best_model_path = os.path.join(logdir, saved_model_list[best_model_index])
+
     best_saved_epoch = int(best_model_path.split('.')[-2].split('_')[-1])
+
     # delete all other saved models
     saved_model_list.remove(saved_model_list[best_model_index])
     for model_file in saved_model_list:

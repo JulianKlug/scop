@@ -15,7 +15,7 @@
     "weight_decay_coefficient": 1e-4,
     "use_augmentation": 1,
     "augmentation_magnitude": 1.25,
-    "target_metric": "max running_auc",
+    "target_metric": "max auc",
     "cv_n_repeats": 1,
     "cv_n_folds": 5,
     "norby": 0,
