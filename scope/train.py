@@ -118,9 +118,12 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     best_val_score_index = np.argmax(history.history["val_" + target_metric[1]])
     plateau_size = 10
     moving_average_val_score = running_average(history.history["val_" + target_metric[1]], N=plateau_size)
-    # TODO: maybe try to weight moving average with current value
-    best_moving_average_val_score_epoch = np.argmax(moving_average_val_score) + 1
-    best_val_score_plateau = moving_average_val_score[np.argmax(moving_average_val_score)]
+    # weight moving average with current value
+    current_score_weight = 0.5
+    weighed_moving_average_val_score = (moving_average_val_score + (current_score_weight * np.array(history.history["val_" + target_metric[1]]))) / (1 + current_score_weight)
+    best_moving_average_val_score_epoch = np.argmax(weighed_moving_average_val_score) + 1
+    best_val_score_plateau = weighed_moving_average_val_score[np.argmax(weighed_moving_average_val_score)]
+    best_val_score = history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch]
     print('Best validation plateau centers at epoch:', best_moving_average_val_score_epoch)
     print('Best validation plateau value:', best_val_score_plateau)
     print('Best validation plateau:', history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch - plateau_size//2:best_moving_average_val_score_epoch + plateau_size//2])
@@ -153,7 +156,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     for model_file in saved_model_list:
         os.remove(os.path.join(logdir, model_file))
 
-    return model, best_model_path, best_saved_epoch, best_val_score_plateau
+    return model, best_model_path, best_saved_epoch, best_val_score, best_val_score_plateau
 
 
 if __name__ == '__main__':

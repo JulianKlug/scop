@@ -78,7 +78,8 @@ def cross_validate(config: dict):
             # Multiple train rounds can be used to select best model based on validation scope or to construct ensemble
             for train_round_i in range(config.max_train_rounds):
                 # train
-                _, model_path, saved_train_epoch, best_val_score_plateau = train(label_file_path, temp_train_data_path, fold_dir, outcome,
+                _, model_path, saved_train_epoch, best_val_score, best_val_score_plateau = train(label_file_path,
+                                                              temp_train_data_path, fold_dir, outcome,
                                                               channels, model_type, model_input_shape,
                                                               initial_learning_rate, epochs=epochs,
                                                               target_metric=config.target_metric,
@@ -112,7 +113,8 @@ def cross_validate(config: dict):
 
             # store results
             fold_result_dict.update({'iteration': iteration, 'fold': fold, 'kfold_split_seed': j,
-                                     'train_epoch':saved_train_epoch, 'validation_plateau_auc': best_val_score_plateau})
+                                     'train_epoch':saved_train_epoch,
+                                     'validation_auc': best_val_score,'validation_plateau_auc': best_val_score_plateau})
             subject_prediction_label = np.vstack(
                 [subject_prediction_label, np.repeat(iteration, subject_prediction_label.shape[1]),
                  np.repeat(j, subject_prediction_label.shape[1])])
