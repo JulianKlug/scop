@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from scope.utils.metrics import f1_m
 from scope.models.get_model import get_model
 

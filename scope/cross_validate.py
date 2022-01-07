@@ -49,6 +49,7 @@ def cross_validate(config: dict):
 
     # Start iteration of repeated k-fold cross-validation
     iteration = 0
+    np.random.seed(42)
     for j in np.random.randint(0, high=10000, size=n_repeats):
         iteration_dir = os.path.join(output_dir, 'iteration_' + str(iteration))
         ensure_dir(iteration_dir)

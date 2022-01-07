@@ -28,7 +28,7 @@ from scope.parse_config import parse_config
 from datetime import datetime
 from tensorflow import keras
 # from datasets.leftright_dataset import get_LeftRightDataset
-from datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
+from scope.datasets.gsd_outcome_dataset import get_gsd_outcome_dataset
 from scope.utils.metrics import f1_m, running_average
 from scope.utils.metrics import RegressionAUC
 from scope.models.get_model import get_model
@@ -37,7 +37,7 @@ from scope.models.get_model import get_model
 def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels, model_type, model_input_shape,
           initial_learning_rate, id_variable, continuous_outcome=False, epochs=200, early_stopping_patience=100, split_ratio=0.3, batch_size=2,
           target_metric='max auc', use_augmentation=True, augmentation_magnitude=10, force_cpu=False, weight_decay_coefficient=1e-4, lr_decay_steps=10000000,
-          logdir=None):
+          logdir=None, extra_callbacks=[]):
 
     if force_cpu:
         print("Disabling GPUs.")
@@ -104,6 +104,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         log_dir=logdir,
         histogram_freq=5,
     )
+    callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_callback] + extra_callbacks
 
     # Train the model, doing validation at the end of each epoch
     history = model.fit(
@@ -112,7 +113,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
         epochs=epochs,
         shuffle=True,
         verbose=2,
-        callbacks=[checkpoint_cb, early_stopping_cb, tensorboard_callback],
+        callbacks=callbacks,
     )
 
     best_val_score_index = np.argmax(history.history["val_" + target_metric[1]])
@@ -123,7 +124,7 @@ def train(label_file_path, imaging_dataset_path, main_log_dir, outcome, channels
     weighed_moving_average_val_score = (moving_average_val_score + (current_score_weight * np.array(history.history["val_" + target_metric[1]]))) / (1 + current_score_weight)
     best_moving_average_val_score_epoch = np.argmax(weighed_moving_average_val_score) + 1
     best_val_score_plateau = weighed_moving_average_val_score[np.argmax(weighed_moving_average_val_score)]
-    best_val_score = history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch]
+    best_val_score = history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch - 1]
     print('Best validation plateau centers at epoch:', best_moving_average_val_score_epoch)
     print('Best validation plateau value:', best_val_score_plateau)
     print('Best validation plateau:', history.history["val_" + target_metric[1]][best_moving_average_val_score_epoch - plateau_size//2:best_moving_average_val_score_epoch + plateau_size//2])
